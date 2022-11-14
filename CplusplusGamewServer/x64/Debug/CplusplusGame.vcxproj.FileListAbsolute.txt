@@ -1,0 +1,2 @@
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\x64\Debug\CplusplusGame.exe
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\x64\Debug\CplusplusGamewServer.exe
