@@ -16,39 +16,29 @@ struct Message
 {
 	float newX;
 	float newY;
-	int frame_ID;
+	u_int frame_ID;
 	u_int index;
-	u_int gamemode;
-};
-
-struct PlacedBlock
-{
-	float x;
-	float y;
-	float half_width;
-	float half_height;
-	float speed = 0.005f;
-
-	bool finish_block = false;
 };
 
 struct WorldUpdate
 {
 	// Needs to not require PlaceBlock defined here
 	// TODO later
-	//std::list<PlacedBlock> all_blocks;
-	PlacedBlock start;
-	PlacedBlock finish;
+	float start_x;
+	float start_y;
+	float start_half_width;
+	float start_half_height;
+	bool start_finish_block = false;
+
+	float finish_x;
+	float finish_y;
+	float finish_half_width;
+	float finish_half_height;
+	bool finish_block = true;
+
 	u_int current_gamemode;
 };
 
-enum GAMEMODE
-{
-	Waiting,
-	Playing,
-	Placing,
-	Gamemode_Count
-};
 
 using namespace sf;
 IpAddress ip;
@@ -56,9 +46,9 @@ unsigned short udp_port;
 TcpSocket socket_tcp;
 
 internal void init_server_connection(WorldUpdate* initial_world,
-									Message* initial_player,
-									IpAddress new_ip = SERVER_IP,
-									unsigned short new_udp_port = SERVER_PORT_UDP
+									 Message* initial_player,
+									 IpAddress new_ip = SERVER_IP,
+									 unsigned short new_udp_port = SERVER_PORT_UDP
 									)
 {
 	ip = new_ip;
@@ -71,40 +61,51 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	}
 
 	// Recieve initial World Status via TCP
-	std::size_t received;
-	Socket::Status initial_world_update_status = socket_tcp.receive(initial_world, sizeof(WorldUpdate), received);
+	Packet world_init;
+	Socket::Status initial_world_update_status = socket_tcp.receive(world_init);
 	if (initial_world_update_status == Socket::Partial)
-	{
-		//while ()
-		printf("wrong");
-	}
-	if (initial_world_update_status != Socket::Done)
-	{
-		printf("These error messages go nowhere but anyway world update failed.");
-	}
-
-	// Recieve intial player position via TCP
-	Socket::Status initial_player_status = socket_tcp.receive(initial_player, sizeof(Message), received);
-	if (initial_player_status == Socket::Partial)
 	{
 		//while ()
 		OutputDebugString("wrong");
 	}
-	if (initial_player_status != Socket::Done)
+	else if (initial_world_update_status != Socket::Done)
 	{
-		OutputDebugString("These error messages go nowhere but anyway player start failed.");
+		OutputDebugString("These error messages go nowhere but anyway world update failed.\n");
+	}
+	if (world_init >> initial_world->start_x >> initial_world->start_y >> initial_world->start_half_width >> initial_world->start_half_height
+		>> initial_world->finish_x >> initial_world->finish_y >> initial_world->finish_half_width >> initial_world->finish_half_height
+		>> initial_world->current_gamemode)
+	{
+		OutputDebugString("Parsed initial world information.\n");
 	}
 
+
+	// Recieve intial player position via TCP
+	Packet player_init;
+	Socket::Status initial_player_status = socket_tcp.receive(player_init);
+	if (initial_player_status == Socket::Partial)
+	{
+		//while ()
+		OutputDebugString("wrong\n");
+	}
+	else if (initial_player_status != Socket::Done)
+	{
+		OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
+	}
+	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->index)
+	{
+		OutputDebugString("Parsed initial player information.\n");
+	}
 
 	socket_tcp.setBlocking(false);
 	return;
 }
 
-internal void update_server_position(Message update)
+internal void update_server_position(Packet update)
 {
 	UdpSocket socket;
 
-	if (socket.send(&update, sizeof(Message), ip, udp_port) != Socket::Done)
+	if (socket.send(update, ip, udp_port) != Socket::Done)
 	{
 		printf("Send Error\n");
 		return;
@@ -125,16 +126,20 @@ internal void server_send_next_turn(u_int index)
 	return;
 }
 
-internal void server_turn_update(GAMEMODE* gamemode)
+internal u_int server_turn_update(u_int gamemode)
 {
-	Message turn_update;
-	size_t received;
+	Packet turn_update;
 
-	Socket::Status status = socket_tcp.receive(&turn_update, sizeof(Message), received);
+	Socket::Status status = socket_tcp.receive(turn_update);
 	if (status == Socket::Done)
 	{
 		OutputDebugString("Got a turn update\n");
-		*gamemode = (GAMEMODE) turn_update.gamemode;
+		u_int new_gamemode;
+		if (turn_update >> new_gamemode)
+		{
+			return new_gamemode;
+		}
+		
 	}
-	return;
+	return gamemode;
 }

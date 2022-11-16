@@ -30,6 +30,23 @@ struct Player
 	u_int index;
 	u_int score;
 };
+struct PlacedBlock
+{
+	float x;
+	float y;
+	float half_width;
+	float half_height;
+
+	bool finish_block = false;
+	float speed = 0.005f;
+};
+enum GAMEMODE
+{
+	Waiting,
+	Playing,
+	Placing,
+	Gamemode_Count
+};
 
 GAMEMODE current_gamemode;
 
@@ -47,14 +64,31 @@ internal void init_game()
 	WorldUpdate initial_world;
 	Message initial_player;
 	init_server_connection(&initial_world, &initial_player);
+
+	// Using server world info, set up the gamespace
 	current_gamemode = (GAMEMODE) initial_world.current_gamemode;
-	player.index = initial_player.index;
 
-	all_game_blocks = { initial_world.start, initial_world.finish };
-	//all_game_blocks = {start, finish};
+	PlacedBlock start {
+		initial_world.start_x,
+		initial_world.start_y,
+		initial_world.start_half_width,
+		initial_world.start_half_height,
+		initial_world.start_finish_block
+	};
 
+	PlacedBlock finish {
+		initial_world.finish_x,
+		initial_world.finish_y,
+		initial_world.finish_half_width,
+		initial_world.finish_half_height,
+		initial_world.finish_block
+	};
+	all_game_blocks = {start, finish};
+
+	//---------------------------------------------------------------------------
 
 	// Read Player starting position from server
+	player.index = initial_player.index;
 	player.player_spawn_x = initial_player.newX;
 	player.player_spawn_y = initial_player.newY;
 
@@ -102,6 +136,11 @@ internal void run_game(Input* input, float dt)
 			Gamemode for when waiting for the player turn
 		*/
 		case (GAMEMODE::Waiting):
+			if (released(BUTTON_Z))
+			{
+				server_send_next_turn(player.index);
+				//turn_end = true;
+			}
 			for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
 			{
 				if (it->finish_block)
@@ -160,6 +199,7 @@ internal void run_game(Input* input, float dt)
 				if (collision_result == 1) player.score++;
 				player.player_pos_x = player.player_spawn_x;
 				player.player_pos_y = player.player_spawn_y;
+				spawned_next_platform = false;
 				server_send_next_turn(player.index);
 			}
 			
@@ -183,12 +223,12 @@ internal void run_game(Input* input, float dt)
 			Placing new blocks Gamemode 
 		*/
 		case (GAMEMODE::Placing):
-			if (pressed(BUTTON_Z))
+			if (released(BUTTON_Z))
 			{
-				current_gamemode = GAMEMODE::Playing;
+				server_send_next_turn(player.index);
 				//turn_end = true;
 			}
-				
+
 			if (my_turn)
 			{
 				if (!spawned_next_platform) {
@@ -235,16 +275,12 @@ internal void server_interact()
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
-		Message update;
-		update.newX = player.player_pos_x;
-		update.newY = player.player_pos_y;
-		update.frame_ID = frame_count;
-		update.index = player.index;
-		update.gamemode = current_gamemode;
+		Packet update;
+		update << player.player_pos_x << player.player_pos_y;
 		update_server_position(update);
 	}
 
-	server_turn_update(&current_gamemode);
+	current_gamemode = (GAMEMODE) server_turn_update((u_int)current_gamemode);
 }
 
 internal u_int run_collision(BetterRectangle adjusted_player_pos)

@@ -22,9 +22,8 @@ struct Message
 {
 	float newX;
 	float newY;
-	int frameID;
+	u_int frameID;
 	u_int index;
-	u_int gamemode;
 };
 
 struct Player
@@ -188,28 +187,22 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 using namespace sf;
 
-struct WorldUpdate
-{
-	PlacedBlock start;
-	PlacedBlock finish;
-	u_int current_gamemode;
-};
-
 struct Connection
 {
-	TcpSocket client;
+	TcpSocket* client;
 	u_int gamemode;
 
 	// TODO implement id for each client
 };
 
 u_int setup_client(TcpSocket* client);
-u_int world_update(TcpSocket* client, WorldUpdate current_update);
-u_int next_turn(Connection conn);
+u_int world_update(TcpSocket* client, Packet current_update);
+u_int next_turn(Connection* conn);
 
 UdpSocket sock;
 TcpListener listener;
-std::list<Connection> clients;
+std::list<Connection*> clients;
+SocketSelector selector;
 
 void init_server()
 {
@@ -228,7 +221,7 @@ void init_server()
 		printf("TCP bind failed\n");
 		return;
 	}
-
+	selector.add(listener);
 	clients = {};
 }
 
@@ -237,8 +230,8 @@ void run_server(Message* data, Player* player)
 	size_t received;
 
 	// TCP stuff
-	TcpSocket client;
-	Socket::Status conn_status = listener.accept(client);
+	TcpSocket* client = new TcpSocket;
+	Socket::Status conn_status = listener.accept(*client);
 
 	if (conn_status == Socket::Error)
 	{
@@ -256,20 +249,20 @@ void run_server(Message* data, Player* player)
 	{
 		OutputDebugString("Client Connected\n");
 		
-		setup_client(&client);
+		setup_client(client);
 		
-		Connection conn;
-		conn.client = client;
-		conn.gamemode = 1;
+		Connection* conn = new Connection;
+		conn->client = client;
+		conn->gamemode = 1;
 		clients.push_back(conn);
 
 	}
 	
 	Message end_turn_message;
-	for (std::list<Connection>::iterator it = clients.begin(); it != clients.end(); it++)
+	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
 		Packet packet;
-		Socket::Status recv = it->client->receive(packet);
+		Socket::Status recv =  (*it)->client->receive(packet);
 		if (recv == Socket::Error)
 		{
  			OutputDebugString("Unexpected error\n");
@@ -292,7 +285,7 @@ void run_server(Message* data, Player* player)
 			if (packet >> index)
 			{
 				// TEMP
-				it->gamemode = (it->gamemode + 1) % 3;
+				(*it)->gamemode = ((*it)->gamemode + 1) % 3;
 				if ((index + 1) < clients.size())
 				{
 					// TODO: Send next client in list the signal for next turn
@@ -311,8 +304,9 @@ void run_server(Message* data, Player* player)
 	// UDP Stuff
 
 	unsigned short serverPort = SERVER_PORT_UDP;
+	Packet packet;
 	IpAddress sender;
-	Socket::Status recv_udp = sock.receive(data, sizeof(Message), received, sender, serverPort);
+	Socket::Status recv_udp = sock.receive(packet, sender, serverPort);
 
 	if (recv_udp == Socket::Error)
 	{
@@ -328,28 +322,33 @@ void run_server(Message* data, Player* player)
 	{
 		//OutputDebugString("Socket out of data\n");
 	}
+	else if (recv_udp == Socket::Done)
+	{
+		float newX;
+		float newY;
 
-	player->player_pos_x = data->newX;
-	player->player_pos_y = data->newY;
-
+		if (packet >> newX >> newY)
+		{
+			player->player_pos_x = newX;
+			player->player_pos_y = newY;
+		}
+		
+	}
+	
 }
 
 u_int setup_client(TcpSocket* client)
 {
 
-	Message player_start;
-	player_start.newX = -1.6f + (clients.size() * 0.2);
-	player_start.newY = -0.5;
-	player_start.frameID = 0;
-	player_start.index = clients.size();
-
-	WorldUpdate current_update;
-	current_update.start = start;
-	current_update.finish = finish;
-	current_update.current_gamemode = 1;
-
+	Packet current_update;
+	current_update << start.x << start.y << start.half_width << start.half_height << finish.x << finish.y << finish.half_width << finish.half_height << 1;
 	world_update(client, current_update);
-	Socket::Status send_status = client->send(&player_start, sizeof(Message));
+
+
+	Packet player_start;
+	player_start << (float)(-1.6f + (clients.size() * 0.2)) << -0.5f << 0 << clients.size();
+	//player_start << 1.f << 1.f << 1 << 1 << 1;
+	Socket::Status send_status = client->send(player_start);
 	if (send_status == Socket::Partial)
 	{
 		while (client->send(&player_start, sizeof(Message)) == Socket::Partial)
@@ -368,13 +367,13 @@ u_int setup_client(TcpSocket* client)
 	return 1;
 }
 
-u_int world_update(TcpSocket* client, WorldUpdate current_update)
+u_int world_update(TcpSocket* client, Packet current_update)
 {
 	
-	Socket::Status send_status = client->send(&current_update, sizeof(WorldUpdate));
+	Socket::Status send_status = client->send(current_update);
 	if (send_status == Socket::Partial)
 	{
-		while (client->send(&current_update, sizeof(WorldUpdate)) == Socket::Partial)
+		while (client->send(current_update) == Socket::Partial)
 		{
 			//OutputDebugString("Only Parts\n");
 		}
@@ -388,16 +387,14 @@ u_int world_update(TcpSocket* client, WorldUpdate current_update)
 	return 1;
 }
 
-u_int next_turn(Connection conn)
+u_int next_turn(Connection* conn)
 {
 	// TODO: make new struct for each type
 	//		 of message the user sends/recieves
-	Message next_turn_message;
-	next_turn_message.gamemode = conn.gamemode;
+	Packet next_turn_message;
+	next_turn_message << conn->gamemode;
 
-
-	size_t received;
-	Socket::Status send = conn.client->send(&next_turn_message, sizeof(Message));
+	Socket::Status send = conn->client->send(next_turn_message);
 	if (send == Socket::Error)
 	{
 		//OutputDebugString("Receive failed\n");

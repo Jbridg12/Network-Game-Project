@@ -6,8 +6,6 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(32,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(33,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(34,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(268,10): warning C4101: 'end_turn_message': unreferenced local variable
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(341,28): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(344,37): warning C4267: '=': conversion from 'size_t' to 'u_int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(399,9): warning C4101: 'received': unreferenced local variable
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(261,10): warning C4101: 'end_turn_message': unreferenced local variable
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(230,9): warning C4101: 'received': unreferenced local variable
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\x64\Debug\CplusplusGamewServer.exe
