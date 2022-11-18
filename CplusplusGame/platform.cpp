@@ -1,6 +1,8 @@
+#define NOMINMAX
 #include <Windows.h>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
+#include <SFML/Graphics.hpp>
 #include <list>
 #include "platform.h"
 #include "utils.cpp"
@@ -80,6 +82,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	);
 
 	HDC hdc = GetDC(window);
+	sf::Font font;
+	if (!font.loadFromFile("Chunk Five Print.otf"))
+	{
+		OutputDebugString("Failed loading font\n");
+	}
 
 	Input input = {};
 	float delta_time = 0.0166666f;

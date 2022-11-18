@@ -21,9 +21,8 @@ struct PlacedBlock
 	float y;
 	float half_width;
 	float half_height;
-	float speed = 0.005f;
-
 	bool finish_block = false;
+	float speed = 0.005f;
 };
 
 enum GAMEMODE

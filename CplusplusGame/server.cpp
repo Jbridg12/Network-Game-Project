@@ -10,8 +10,6 @@
 //		- Implement better error checking in network code
 //
 
-
-
 struct Message
 {
 	float newX;
@@ -19,7 +17,6 @@ struct Message
 	u_int frame_ID;
 	u_int index;
 };
-
 struct WorldUpdate
 {
 	// Needs to not require PlaceBlock defined here
@@ -38,37 +35,41 @@ struct WorldUpdate
 
 	u_int current_gamemode;
 };
-
-
-using namespace sf;
-IpAddress ip;
+enum PacketType
+{
+	NextTurn,
+	NewBlock,
+	ScoreUpdate,
+	PacketTypes
+};
+sf::IpAddress ip;
 unsigned short udp_port;
-TcpSocket socket_tcp;
+sf::TcpSocket socket_tcp;
 
 internal void init_server_connection(WorldUpdate* initial_world,
 									 Message* initial_player,
-									 IpAddress new_ip = SERVER_IP,
+									 sf::IpAddress new_ip = SERVER_IP,
 									 unsigned short new_udp_port = SERVER_PORT_UDP
 									)
 {
 	ip = new_ip;
 	udp_port = new_udp_port;
 
-	Socket::Status status = socket_tcp.connect(ip, SERVER_PORT_TCP);
-	if (status != Socket::Done)
+	sf::Socket::Status status = socket_tcp.connect(ip, SERVER_PORT_TCP);
+	if (status != sf::Socket::Done)
 	{
 		OutputDebugString("wrong");
 	}
 
 	// Recieve initial World Status via TCP
-	Packet world_init;
-	Socket::Status initial_world_update_status = socket_tcp.receive(world_init);
-	if (initial_world_update_status == Socket::Partial)
+	sf::Packet world_init;
+	sf::Socket::Status initial_world_update_status = socket_tcp.receive(world_init);
+	if (initial_world_update_status == sf::Socket::Partial)
 	{
 		//while ()
 		OutputDebugString("wrong");
 	}
-	else if (initial_world_update_status != Socket::Done)
+	else if (initial_world_update_status != sf::Socket::Done)
 	{
 		OutputDebugString("These error messages go nowhere but anyway world update failed.\n");
 	}
@@ -81,14 +82,14 @@ internal void init_server_connection(WorldUpdate* initial_world,
 
 
 	// Recieve intial player position via TCP
-	Packet player_init;
-	Socket::Status initial_player_status = socket_tcp.receive(player_init);
-	if (initial_player_status == Socket::Partial)
+	sf::Packet player_init;
+	sf::Socket::Status initial_player_status = socket_tcp.receive(player_init);
+	if (initial_player_status == sf::Socket::Partial)
 	{
 		//while ()
 		OutputDebugString("wrong\n");
 	}
-	else if (initial_player_status != Socket::Done)
+	else if (initial_player_status != sf::Socket::Done)
 	{
 		OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
 	}
@@ -101,11 +102,11 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	return;
 }
 
-internal void update_server_position(Packet update)
+internal void update_server_position(sf::Packet update)
 {
-	UdpSocket socket;
+	sf::UdpSocket socket;
 
-	if (socket.send(update, ip, udp_port) != Socket::Done)
+	if (socket.send(update, ip, udp_port) != sf::Socket::Done)
 	{
 		printf("Send Error\n");
 		return;
@@ -115,11 +116,12 @@ internal void update_server_position(Packet update)
 
 internal void server_send_next_turn(u_int index)
 {
-	Packet packet;
+	sf::Packet packet;
+	packet << PacketType::NextTurn;
 	packet << index;
 
-	Socket::Status status = socket_tcp.send(packet);
-	if (status == Socket::Done)
+	sf::Socket::Status status = socket_tcp.send(packet);
+	if (status == sf::Socket::Done)
 	{
 		OutputDebugString("Sent a turn update\n");
 	}
@@ -128,10 +130,10 @@ internal void server_send_next_turn(u_int index)
 
 internal u_int server_turn_update(u_int gamemode)
 {
-	Packet turn_update;
+	sf::Packet turn_update;
 
-	Socket::Status status = socket_tcp.receive(turn_update);
-	if (status == Socket::Done)
+	sf::Socket::Status status = socket_tcp.receive(turn_update);
+	if (status == sf::Socket::Done)
 	{
 		OutputDebugString("Got a turn update\n");
 		u_int new_gamemode;
@@ -142,4 +144,17 @@ internal u_int server_turn_update(u_int gamemode)
 		
 	}
 	return gamemode;
+}
+
+internal void server_send_new_block(float x, float y, float half_width, float half_height)
+{
+	sf::Packet new_block;
+	new_block << PacketType::NewBlock;
+	new_block << x << y << half_width << half_height;
+	sf::Socket::Status status = socket_tcp.send(new_block);
+	if (status == sf::Socket::Done)
+	{
+		OutputDebugString("Sent a new block \n");
+	}
+	return;
 }

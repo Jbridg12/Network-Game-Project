@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <Windows.h>
 #include <iostream>
 #include <string>
@@ -5,12 +7,14 @@
 //#include <Winsock2.h>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
+#include <SFML\Window.hpp>
+#include <SFML\Graphics.hpp>
 #include "platform.h"
 #include "utils.cpp"
 
 global_variable u_short on = 1;
 global_variable BUFFER_STATE buf;
-
+sf::Font font;
 
 /*
 	TODO: Implement Packets with SFML for communication.
@@ -38,7 +42,7 @@ struct Player
 #include "game.cpp"
 
 void init_server();
-void run_server(Message* data, Player* player);
+void run_server(Player* player);
 
 LRESULT CALLBACK winCallback(HWND hwnd,	UINT uMsg,	WPARAM wParam, LPARAM lParam)
 {
@@ -115,6 +119,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	HDC hdc = GetDC(window);
 
+	if (!font.loadFromFile("Chunk Five Print.otf"))
+	{
+		OutputDebugString("Failed loading font\n");
+	}
+
 	float delta_time = 0.0166666f;
 	LARGE_INTEGER frame_begin_time;
 	QueryPerformanceCounter(&frame_begin_time);
@@ -157,13 +166,21 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		// Simulate
 		//run_game(&input, delta_time);
 		Message p1;
-		run_server(&p1, &player);
+		run_server(&player);
 		clear_screen(0x00ff11);
 
-		//char stuff[128];
-		//sprintf_s(stuff, "X: %f | Y: %f\n", player.player_pos_x, player.player_pos_y);
-		//OutputDebugString(stuff);
 
+		for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
+		{
+			if (it->finish_block)
+			{
+				draw_checkered_block(it->x, it->y, it->half_width, it->half_height, false);
+			}
+			else
+			{
+				draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
+			}
+		}
 		draw_rect(player.player_pos_x, player.player_pos_y, 0.04f, 0.04f, 0xff00ff);
 
 		
@@ -185,24 +202,29 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #define SERVER_POT_TCP 53000
 #define SERVER_IP "127.0.0.1"
 
-using namespace sf;
 
 struct Connection
 {
-	TcpSocket* client;
+	sf::TcpSocket* client;
 	u_int gamemode;
 
 	// TODO implement id for each client
 };
-
-u_int setup_client(TcpSocket* client);
-u_int world_update(TcpSocket* client, Packet current_update);
+enum PacketType
+{
+	NextTurn,
+	NewBlock,
+	ScoreUpdate,
+	PacketTypes
+};
+u_int setup_client(sf::TcpSocket* client);
+u_int world_update(sf::TcpSocket* client, sf::Packet current_update);
 u_int next_turn(Connection* conn);
 
-UdpSocket sock;
-TcpListener listener;
+sf::UdpSocket sock;
+sf::TcpListener listener;
 std::list<Connection*> clients;
-SocketSelector selector;
+sf::SocketSelector selector;
 
 void init_server()
 {
@@ -221,31 +243,30 @@ void init_server()
 		printf("TCP bind failed\n");
 		return;
 	}
-	selector.add(listener);
 	clients = {};
 }
 
-void run_server(Message* data, Player* player)
+void run_server(Player* player)
 {
 	size_t received;
 
 	// TCP stuff
-	TcpSocket* client = new TcpSocket;
-	Socket::Status conn_status = listener.accept(*client);
+	sf::TcpSocket* client = new sf::TcpSocket;
+	sf::Socket::Status conn_status = listener.accept(*client);
 
-	if (conn_status == Socket::Error)
+	if (conn_status == sf::Socket::Error)
 	{
 		OutputDebugString("Connection failed\n");
 	}
-	else if (conn_status == Socket::Disconnected)
+	else if (conn_status == sf::Socket::Disconnected)
 	{
 		OutputDebugString("Socket Disconnection\n");
 	}
-	else if (conn_status == Socket::NotReady)
+	else if (conn_status == sf::Socket::NotReady)
 	{
 		OutputDebugString("No Connection\n");
 	}
-	else if (conn_status == Socket::Done)
+	else if (conn_status == sf::Socket::Done)
 	{
 		OutputDebugString("Client Connected\n");
 		
@@ -258,41 +279,60 @@ void run_server(Message* data, Player* player)
 
 	}
 	
-	Message end_turn_message;
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
-		Packet packet;
-		Socket::Status recv =  (*it)->client->receive(packet);
-		if (recv == Socket::Error)
+		sf::Packet packet;
+		sf::Socket::Status recv =  (*it)->client->receive(packet);
+		if (recv == sf::Socket::Error)
 		{
  			OutputDebugString("Unexpected error\n");
 			//WSAGetLastError();
 		}
-		else if (recv == Socket::Disconnected)
+		else if (recv == sf::Socket::Disconnected)
 		{
 			//OutputDebugString("Socket Disconnection\n");
 		}
-		else if (recv == Socket::NotReady)
+		else if (recv == sf::Socket::NotReady)
 		{
 			OutputDebugString("Socket out of data\n");
 		}
-		else if (recv == Socket::Done)
+		else if (recv == sf::Socket::Done)
 		{
-			OutputDebugString("Next Turn\n");
-			
-			u_int index;
-
-			if (packet >> index)
+			int header;
+			if (packet >> header)
 			{
-				// TEMP
-				(*it)->gamemode = ((*it)->gamemode + 1) % 3;
-				if ((index + 1) < clients.size())
+				switch (header)
 				{
-					// TODO: Send next client in list the signal for next turn
-				}
+					case (PacketType::NextTurn):
+						OutputDebugString("Next Turn\n");
 
-				next_turn(*it);
+						u_int index;
+						if (packet >> index)
+						{
+							// TEMP
+							(*it)->gamemode = ((*it)->gamemode + 1) % 3;
+							if ((index + 1) < clients.size())
+							{
+								// TODO: Send next client in list the signal for next turn
+							}
+
+							next_turn(*it);
+						}
+						break;
+					case (PacketType::NewBlock):
+						float x, y, half_width, half_height;
+						if (packet >> x >> y >> half_width >> half_height)
+						{
+							PlacedBlock new_block{ x, y, half_width, half_height };
+							all_game_blocks.push_back(new_block);
+						}
+						break;
+					case (PacketType::ScoreUpdate):
+						break;
+				}
 			}
+			
+			
 			
 		}
 	}
@@ -304,25 +344,25 @@ void run_server(Message* data, Player* player)
 	// UDP Stuff
 
 	unsigned short serverPort = SERVER_PORT_UDP;
-	Packet packet;
-	IpAddress sender;
-	Socket::Status recv_udp = sock.receive(packet, sender, serverPort);
+	sf::Packet packet;
+	sf::IpAddress sender;
+	sf::Socket::Status recv_udp = sock.receive(packet, sender, serverPort);
 
-	if (recv_udp == Socket::Error)
+	if (recv_udp == sf::Socket::Error)
 	{
 		//OutputDebugString("Receive failed\n");
 		return;
 	}
-	else if (recv_udp == Socket::Disconnected)
+	else if (recv_udp == sf::Socket::Disconnected)
 	{
 		//OutputDebugString("Socket Disconnection\n");
 		return;
 	}
-	else if (recv_udp == Socket::NotReady)
+	else if (recv_udp == sf::Socket::NotReady)
 	{
 		//OutputDebugString("Socket out of data\n");
 	}
-	else if (recv_udp == Socket::Done)
+	else if (recv_udp == sf::Socket::Done)
 	{
 		float newX;
 		float newY;
@@ -337,26 +377,26 @@ void run_server(Message* data, Player* player)
 	
 }
 
-u_int setup_client(TcpSocket* client)
+u_int setup_client(sf::TcpSocket* client)
 {
 
-	Packet current_update;
+	sf::Packet current_update;
 	current_update << start.x << start.y << start.half_width << start.half_height << finish.x << finish.y << finish.half_width << finish.half_height << 1;
 	world_update(client, current_update);
 
 
-	Packet player_start;
+	sf::Packet player_start;
 	player_start << (float)(-1.6f + (clients.size() * 0.2)) << -0.5f << 0 << clients.size();
 	//player_start << 1.f << 1.f << 1 << 1 << 1;
-	Socket::Status send_status = client->send(player_start);
-	if (send_status == Socket::Partial)
+	sf::Socket::Status send_status = client->send(player_start);
+	if (send_status == sf::Socket::Partial)
 	{
-		while (client->send(&player_start, sizeof(Message)) == Socket::Partial)
+		while (client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
 		{
 			//OutputDebugString("Only Parts\n");
 		}
 	}
-	if (send_status != Socket::Done)
+	if (send_status != sf::Socket::Done)
 	{
 		//OutputDebugString("These error messages go nowhere but anyway world update failed.");
 		return -1;
@@ -367,18 +407,18 @@ u_int setup_client(TcpSocket* client)
 	return 1;
 }
 
-u_int world_update(TcpSocket* client, Packet current_update)
+u_int world_update(sf::TcpSocket* client, sf::Packet current_update)
 {
 	
-	Socket::Status send_status = client->send(current_update);
-	if (send_status == Socket::Partial)
+	sf::Socket::Status send_status = client->send(current_update);
+	if (send_status == sf::Socket::Partial)
 	{
-		while (client->send(current_update) == Socket::Partial)
+		while (client->send(current_update) == sf::Socket::Partial)
 		{
 			//OutputDebugString("Only Parts\n");
 		}
 	}
-	if (send_status != Socket::Done)
+	if (send_status != sf::Socket::Done)
 	{
 		//OutputDebugString("These error messages go nowhere but anyway world update failed.");
 		return -1;
@@ -391,21 +431,21 @@ u_int next_turn(Connection* conn)
 {
 	// TODO: make new struct for each type
 	//		 of message the user sends/recieves
-	Packet next_turn_message;
+	sf::Packet next_turn_message;
 	next_turn_message << conn->gamemode;
 
-	Socket::Status send = conn->client->send(next_turn_message);
-	if (send == Socket::Error)
+	sf::Socket::Status send = conn->client->send(next_turn_message);
+	if (send == sf::Socket::Error)
 	{
 		//OutputDebugString("Receive failed\n");
 		return -1;
 	}
-	else if (send == Socket::Disconnected)
+	else if (send == sf::Socket::Disconnected)
 	{
 		//OutputDebugString("Socket Disconnection\n");
 		return -1;
 	}
-	else if (send == Socket::NotReady)
+	else if (send == sf::Socket::NotReady)
 	{
 		//OutputDebugString("Socket out of data\n");
 		return -1;

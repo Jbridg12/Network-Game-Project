@@ -4,7 +4,7 @@
 
 internal void run_game(Input* input, float dt);
 internal u_int run_collision(BetterRectangle adjusted_player_pos);
-internal void server_interact();
+internal void server_pass();
 
 struct Player
 {
@@ -152,13 +152,12 @@ internal void run_game(Input* input, float dt)
 					draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
 				}
 			}
+			draw_rect(player.player_pos_x, player.player_pos_y, player.player_half_width, player.player_half_height, 0xff00ff);
 			break;
 		/*
 			Platforming Gamemode
 		*/
 		case (GAMEMODE::Playing):
-			//if (is_down(BUTTON_W)) player.y_acceleration += 30;
-			//if (is_down(BUTTON_S)) player.y_acceleration -= 30;
 			if (is_down(BUTTON_A)) player.x_acceleration -= 30;
 			if (is_down(BUTTON_D)) player.x_acceleration += 30;
 			if (pressed(BUTTON_SPACE))
@@ -167,11 +166,7 @@ internal void run_game(Input* input, float dt)
 				//if (grounded)
 					//player.y_acceleration += 1000;
 			}
-			if (pressed(BUTTON_Z))
-			{
-				spawned_next_platform = false;
-				//current_gamemode = GAMEMODE::Placing;
-			}
+
 
 			// Method to add friction in specific directions to lower speed over time
 			//player.y_acceleration -= player.y_speed * 20.0f;
@@ -193,17 +188,23 @@ internal void run_game(Input* input, float dt)
 																		player.player_half_width, 
 																		player.player_half_height);
 
+			
+			// Player Collision Detection	
 			collision_result = run_collision(adjusted_player_position);
 			if (collision_result > 0)
 			{
 				if (collision_result == 1) player.score++;
 				player.player_pos_x = player.player_spawn_x;
 				player.player_pos_y = player.player_spawn_y;
+				player.x_speed = 0.f;
+				player.y_speed = 0.f;
+				player.x_acceleration = 0.f;
+				player.y_acceleration = 0.f;
 				spawned_next_platform = false;
 				server_send_next_turn(player.index);
 			}
 			
-
+			// Rendering Game Objects
 			for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
 			{
 				if (it->finish_block)
@@ -225,6 +226,7 @@ internal void run_game(Input* input, float dt)
 		case (GAMEMODE::Placing):
 			if (released(BUTTON_Z))
 			{
+				server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
 				server_send_next_turn(player.index);
 				//turn_end = true;
 			}
@@ -260,22 +262,21 @@ internal void run_game(Input* input, float dt)
 					draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
 				}
 			}
-
 			draw_rect(player.player_pos_x, player.player_pos_y, player.player_half_width, player.player_half_height, 0xf00001);
 			break;
 		default:
 			break;
 	}
 
-	server_interact();
+	server_pass();
 	frame_count++;
 }
 
-internal void server_interact()
+internal void server_pass()
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
-		Packet update;
+		sf::Packet update;
 		update << player.player_pos_x << player.player_pos_y;
 		update_server_position(update);
 	}
