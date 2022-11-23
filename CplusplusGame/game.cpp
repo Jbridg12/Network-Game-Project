@@ -2,9 +2,9 @@
 #define pressed(b) (input->buttons[b].is_down && input->buttons[b].changed)
 #define released(b) (!input->buttons[b].is_down && input->buttons[b].changed)
 
-internal void run_game(Input* input, float dt);
+internal void run_game(Input* input, float dt, char* score_buffer);
 internal u_int run_collision(BetterRectangle adjusted_player_pos);
-internal void server_pass();
+internal void server_pass(char* score_buffer);
 
 struct Player
 {
@@ -29,6 +29,7 @@ struct Player
 	// Server variables
 	u_int index;
 	u_int score;
+	u_int frame;
 };
 struct PlacedBlock
 {
@@ -50,6 +51,7 @@ enum GAMEMODE
 
 GAMEMODE current_gamemode;
 
+list<Player*> players;
 Player player;
 u_int frame_count;
 bool my_turn = true;
@@ -63,7 +65,8 @@ internal void init_game()
 	// Parse information about client from the server
 	WorldUpdate initial_world;
 	Message initial_player;
-	init_server_connection(&initial_world, &initial_player);
+	sf::Packet other_players;
+	init_server_connection(&initial_world, &initial_player, &other_players);
 
 	// Using server world info, set up the gamespace
 	current_gamemode = (GAMEMODE) initial_world.current_gamemode;
@@ -103,15 +106,51 @@ internal void init_game()
 
 	player.player_old_x = player.player_pos_x;
 	player.player_old_y = player.player_pos_y;
-	frame_count = 0;
-
-	
+	player.frame = initial_player.frame_ID;
+	frame_count = player.frame;
 	player.score = 0;
+
+	//--------------------------------------------------------------------------
+
+	// Read other players status from server
+	if (player.index != 0)
+	{
+		u_int player_count;
+		if (other_players >> player_count)
+		{
+			for (int i = 0; i < player_count; i++)
+			{
+				Player* new_player = new Player;
+				other_players >> new_player->player_spawn_x;
+				other_players >> new_player->player_spawn_y;
+				other_players >> new_player->frame;
+				other_players >> new_player->index;
+
+				new_player->player_pos_x = new_player->player_spawn_x;
+				new_player->player_pos_y = new_player->player_spawn_y;
+				new_player->player_half_width = 0.04f;
+				new_player->player_half_height = 0.04f;
+				new_player->x_speed = 0.f;
+				new_player->y_speed = 0.f;
+				new_player->x_acceleration = 0.f;
+				new_player->y_acceleration = 0.f;
+
+				new_player->player_old_x = new_player->player_pos_x;
+				new_player->player_old_y = new_player->player_pos_y;
+				
+				new_player->score = 0;
+
+				players.push_back(new_player);
+			}
+		}
+	}
+	players.push_back(&player);
+
 	return;
 
 }
 
-internal void run_game(Input* input, float dt)
+internal void run_game(Input* input, float dt, char* score_buffer)
 {
 	// Update
 	//char stuff[128];
@@ -139,7 +178,6 @@ internal void run_game(Input* input, float dt)
 			if (released(BUTTON_Z))
 			{
 				server_send_next_turn(player.index);
-				//turn_end = true;
 			}
 			for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
 			{
@@ -152,7 +190,12 @@ internal void run_game(Input* input, float dt)
 					draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
 				}
 			}
-			draw_rect(player.player_pos_x, player.player_pos_y, player.player_half_width, player.player_half_height, 0xff00ff);
+
+			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
+			{
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+			}
+			
 			break;
 		/*
 			Platforming Gamemode
@@ -217,7 +260,10 @@ internal void run_game(Input* input, float dt)
 				}
 			}
 
-			draw_rect(player.player_pos_x, player.player_pos_y, player.player_half_width, player.player_half_height, 0xff00ff);
+			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
+			{
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+			}
 			break;
 
 		/*
@@ -228,7 +274,6 @@ internal void run_game(Input* input, float dt)
 			{
 				server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
 				server_send_next_turn(player.index);
-				//turn_end = true;
 			}
 
 			if (my_turn)
@@ -262,26 +307,79 @@ internal void run_game(Input* input, float dt)
 					draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
 				}
 			}
-			draw_rect(player.player_pos_x, player.player_pos_y, player.player_half_width, player.player_half_height, 0xf00001);
+			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
+			{
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+			}
 			break;
 		default:
 			break;
 	}
 
-	server_pass();
+	server_pass(score_buffer);
 	frame_count++;
 }
 
-internal void server_pass()
+internal void server_pass(char* score_buffer)
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
 		sf::Packet update;
-		update << player.player_pos_x << player.player_pos_y;
+		update << player.index << player.player_pos_x << player.player_pos_y;
 		update_server_position(update);
 	}
 
-	current_gamemode = (GAMEMODE) server_turn_update((u_int)current_gamemode);
+	sf::Packet update;
+	sf::Socket::Status status = socket_tcp.receive(update);
+	if (status == sf::Socket::Done)
+	{
+		int header;
+		if (update >> header)
+		{
+			PlacedBlock new_block;
+			Player* new_player = new Player;
+			switch (header)
+			{
+				case (PacketType::NextTurn):
+					current_gamemode = (GAMEMODE)server_turn_update(update, (u_int)current_gamemode);
+					break;
+				case (PacketType::NewBlock):
+					if(server_new_block_update(update, &(new_block.x), &(new_block.y), &(new_block.half_width), &(new_block.half_height)) != 0)
+						all_game_blocks.push_back(new_block);
+					
+					break;
+				case (PacketType::ScoreUpdate):
+					update >> score_buffer;
+					break;
+				case (PacketType::NewPlayer):
+					update >> new_player->player_spawn_x;
+					update >> new_player->player_spawn_y;
+					update >> new_player->frame;
+					update >> new_player->index;
+
+					new_player->player_pos_x = new_player->player_spawn_x;
+					new_player->player_pos_y = new_player->player_spawn_y;
+					new_player->player_half_width = 0.04f;
+					new_player->player_half_height = 0.04f;
+					new_player->x_speed = 0.f;
+					new_player->y_speed = 0.f;
+					new_player->x_acceleration = 0.f;
+					new_player->y_acceleration = 0.f;
+
+					new_player->player_old_x = new_player->player_pos_x;
+					new_player->player_old_y = new_player->player_pos_y;
+
+					new_player->score = 0;
+
+					players.push_back(new_player);
+					break;
+				default:
+					break;
+			}
+		}
+
+	}
+	
 }
 
 internal u_int run_collision(BetterRectangle adjusted_player_pos)

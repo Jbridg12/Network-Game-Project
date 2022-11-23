@@ -40,6 +40,7 @@ enum PacketType
 	NextTurn,
 	NewBlock,
 	ScoreUpdate,
+	NewPlayer,
 	PacketTypes
 };
 sf::IpAddress ip;
@@ -48,6 +49,7 @@ sf::TcpSocket socket_tcp;
 
 internal void init_server_connection(WorldUpdate* initial_world,
 									 Message* initial_player,
+									 sf::Packet* other_players,
 									 sf::IpAddress new_ip = SERVER_IP,
 									 unsigned short new_udp_port = SERVER_PORT_UDP
 									)
@@ -93,9 +95,21 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	{
 		OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
 	}
+	int temp_tag;
+	player_init >> temp_tag;
 	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->index)
 	{
 		OutputDebugString("Parsed initial player information.\n");
+	}
+
+	// After first player requires more 
+	if (initial_player->index != 0)
+	{
+		sf::Socket::Status other_players_status = socket_tcp.receive(*other_players);
+		if (other_players_status != sf::Socket::Done) 
+		{
+			return;
+		}
 	}
 
 	socket_tcp.setBlocking(false);
@@ -128,22 +142,16 @@ internal void server_send_next_turn(u_int index)
 	return;
 }
 
-internal u_int server_turn_update(u_int gamemode)
+internal u_int server_turn_update(sf::Packet turn_update, u_int gamemode)
 {
-	sf::Packet turn_update;
-
-	sf::Socket::Status status = socket_tcp.receive(turn_update);
-	if (status == sf::Socket::Done)
+	OutputDebugString("Got a turn update\n");
+	u_int new_gamemode;
+	if (turn_update >> new_gamemode)
 	{
-		OutputDebugString("Got a turn update\n");
-		u_int new_gamemode;
-		if (turn_update >> new_gamemode)
-		{
-			return new_gamemode;
-		}
-		
+		return new_gamemode;
 	}
 	return gamemode;
+		
 }
 
 internal void server_send_new_block(float x, float y, float half_width, float half_height)
@@ -157,4 +165,15 @@ internal void server_send_new_block(float x, float y, float half_width, float ha
 		OutputDebugString("Sent a new block \n");
 	}
 	return;
+}
+
+internal u_int server_new_block_update(sf::Packet block_update, float* x, float* y, float* half_width, float* half_height)
+{
+	if (block_update >> (*x)  >> (*y) >> (*half_width) >> (*half_height))
+	{
+		return 1;
+	}
+
+	return 0;
+
 }

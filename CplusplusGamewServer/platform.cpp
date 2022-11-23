@@ -35,6 +35,7 @@ struct Player
 	float player_pos_x;
 	float player_pos_y;
 	int frame_num;
+	u_int index;
 
 };
 
@@ -43,160 +44,6 @@ struct Player
 
 void init_server();
 void run_server(Player* player);
-
-LRESULT CALLBACK winCallback(HWND hwnd,	UINT uMsg,	WPARAM wParam, LPARAM lParam)
-{
-	LRESULT result = 0;
-
-	switch (uMsg) {
-		case WM_CLOSE:{}
-		case WM_DESTROY: {
-			on = 0;
-		} break;
-		case WM_SIZE: {
-			RECT screen;
-			GetClientRect(hwnd, &screen);
-			buf.b_height = screen.bottom - screen.top;
-			buf.b_width = screen.right - screen.left;
-
-			buf.buffer_size = buf.b_width * buf.b_height * sizeof(u_int);
-
-			if (buf.memory) VirtualFree(buf.memory, 0, MEM_RELEASE);
-			buf.memory = VirtualAlloc(0, buf.buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-
-			buf.b_bitmapinfo.bmiHeader.biSize = sizeof(buf.b_bitmapinfo.bmiHeader);
-			buf.b_bitmapinfo.bmiHeader.biWidth = buf.b_width;
-			buf.b_bitmapinfo.bmiHeader.biHeight = buf.b_height;
-			buf.b_bitmapinfo.bmiHeader.biPlanes = 1;
-			buf.b_bitmapinfo.bmiHeader.biBitCount = 32;
-			buf.b_bitmapinfo.bmiHeader.biCompression = BI_RGB;
-
-		}
-
-		default: {
-			result = DefWindowProc(hwnd, uMsg, wParam, lParam);
-		}
-			
-	}
-
-	return result;
-}
-
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
-{
-	// Create Player to Draw
-	Player player;
-	player.player_pos_x = 0.f;
-	player.player_pos_y = 0.f;
-
-
-
-	// Create Window Class
-
-	WNDCLASS window_class = {};
-	window_class.style = CS_HREDRAW | CS_VREDRAW;
-	window_class.lpszClassName = "Game Window Class";
-	window_class.lpfnWndProc = winCallback;
-
-	// Register Window
-	RegisterClass(&window_class);
-	init_game();
-	init_server();
-
-	// Draw It
-	HWND window = CreateWindowA(window_class.lpszClassName,
-		"The Game Screen",
-		WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		1280,
-		720,
-		0,
-		0,
-		hInstance,
-		0
-	);
-
-	HDC hdc = GetDC(window);
-
-	if (!font.loadFromFile("Chunk Five Print.otf"))
-	{
-		OutputDebugString("Failed loading font\n");
-	}
-
-	float delta_time = 0.0166666f;
-	LARGE_INTEGER frame_begin_time;
-	QueryPerformanceCounter(&frame_begin_time);
-
-	float performance_frequency;
-	{
-		LARGE_INTEGER perf;
-		QueryPerformanceFrequency(&perf);
-		performance_frequency = (float)perf.QuadPart;
-	}
-
-	while (on)
-	{
-		// Input
-		MSG message;
-
-		while (PeekMessage(&message, window, 0, 0, PM_REMOVE))
-		{
-
-			switch (message.message)
-			{
-				case WM_KEYUP: {
-
-				}
-				case WM_KEYDOWN: {
-					u_int vk_code = (u_int)message.wParam;
-					bool is_down = ((message.lParam & (1 << 31)) == 0);
-
-
-				} break;
-				default: {
-					TranslateMessage(&message);
-					DispatchMessage(&message);
-				}
-					
-			}
-			
-		}
-
-		// Simulate
-		//run_game(&input, delta_time);
-		Message p1;
-		run_server(&player);
-		clear_screen(0x00ff11);
-
-
-		for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
-		{
-			if (it->finish_block)
-			{
-				draw_checkered_block(it->x, it->y, it->half_width, it->half_height, false);
-			}
-			else
-			{
-				draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
-			}
-		}
-		draw_rect(player.player_pos_x, player.player_pos_y, 0.04f, 0.04f, 0xff00ff);
-
-		
-
-		// Render
-		StretchDIBits(hdc, 0, 0, buf.b_width, buf.b_height, 0, 0, buf.b_width, buf.b_height, buf.memory, &buf.b_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
-
-
-		LARGE_INTEGER frame_end_time;
-		QueryPerformanceCounter(&frame_end_time);
-		delta_time = (float)(frame_end_time.QuadPart - frame_begin_time.QuadPart) / performance_frequency;
-		frame_begin_time = frame_end_time;
-	}
-	
-} 
-
 
 #define SERVER_PORT_UDP 54000
 #define SERVER_POT_TCP 53000
@@ -208,6 +55,7 @@ struct Connection
 	sf::TcpSocket* client;
 	u_int gamemode;
 
+	Player player;
 	// TODO implement id for each client
 };
 enum PacketType
@@ -215,12 +63,14 @@ enum PacketType
 	NextTurn,
 	NewBlock,
 	ScoreUpdate,
+	NewPlayer,
 	PacketTypes
 };
-u_int setup_client(sf::TcpSocket* client);
+u_int setup_client(Connection* conn);
 u_int world_update(sf::TcpSocket* client, sf::Packet current_update);
 u_int next_turn(Connection* conn);
 
+Player player;
 sf::UdpSocket sock;
 sf::TcpListener listener;
 std::list<Connection*> clients;
@@ -270,11 +120,12 @@ void run_server(Player* player)
 	{
 		OutputDebugString("Client Connected\n");
 		
-		setup_client(client);
-		
 		Connection* conn = new Connection;
 		conn->client = client;
-		conn->gamemode = 1;
+		conn->gamemode = (clients.size() == 0) ? 1 : 0;
+		conn->player = {(float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, (u_int) clients.size()};
+		setup_client(conn);
+		
 		clients.push_back(conn);
 
 	}
@@ -290,7 +141,8 @@ void run_server(Player* player)
 		}
 		else if (recv == sf::Socket::Disconnected)
 		{
-			//OutputDebugString("Socket Disconnection\n");
+			OutputDebugString("Socket Disconnection\n");
+			//it = clients.erase(it);
 		}
 		else if (recv == sf::Socket::NotReady)
 		{
@@ -366,32 +218,36 @@ void run_server(Player* player)
 	{
 		float newX;
 		float newY;
-
-		if (packet >> newX >> newY)
+		int index;
+		if (packet >> index >> newX >> newY)
 		{
-			player->player_pos_x = newX;
-			player->player_pos_y = newY;
+			std::list<Connection*>::iterator it = clients.begin();
+			for (int i = 0; i < index; i++)
+			{
+				it++;
+			}
+
+			(*it)->player.player_pos_x = newX;
+			(*it)->player.player_pos_y = newY;
 		}
 		
 	}
 	
 }
 
-u_int setup_client(sf::TcpSocket* client)
+u_int setup_client(Connection* conn)
 {
-
 	sf::Packet current_update;
 	current_update << start.x << start.y << start.half_width << start.half_height << finish.x << finish.y << finish.half_width << finish.half_height << 1;
-	world_update(client, current_update);
+	world_update(conn->client, current_update);
 
 
 	sf::Packet player_start;
-	player_start << (float)(-1.6f + (clients.size() * 0.2)) << -0.5f << 0 << clients.size();
-	//player_start << 1.f << 1.f << 1 << 1 << 1;
-	sf::Socket::Status send_status = client->send(player_start);
+	player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.index;
+	sf::Socket::Status send_status = conn->client->send(player_start);
 	if (send_status == sf::Socket::Partial)
 	{
-		while (client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
+		while (conn->client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
 		{
 			//OutputDebugString("Only Parts\n");
 		}
@@ -402,8 +258,29 @@ u_int setup_client(sf::TcpSocket* client)
 		return -1;
 	}
 
-	client->setBlocking(false);
-	//client->setBlocking(true);
+
+	// Update all other clients to recognize have new player in game
+	if (!clients.empty())
+	{
+		sf::Packet all_players;
+		all_players << (int) clients.size();
+		for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+		{
+			sf::Socket::Status send_status = (*it)->client->send(player_start);
+			all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.index;
+		}
+		
+
+		sf::Socket::Status send_status2 = conn->client->send(all_players);
+		if (send_status != sf::Socket::Done)
+		{
+			//OutputDebugString("These error messages go nowhere but anyway world update failed.");
+			return -1;
+		}
+
+	}
+
+	conn->client->setBlocking(false);
 	return 1;
 }
 
@@ -432,7 +309,7 @@ u_int next_turn(Connection* conn)
 	// TODO: make new struct for each type
 	//		 of message the user sends/recieves
 	sf::Packet next_turn_message;
-	next_turn_message << conn->gamemode;
+	next_turn_message << PacketType::NextTurn << conn->gamemode;
 
 	sf::Socket::Status send = conn->client->send(next_turn_message);
 	if (send == sf::Socket::Error)
@@ -452,4 +329,155 @@ u_int next_turn(Connection* conn)
 	}
 
 	return 1;
+}
+
+// Windows Stuff
+
+LRESULT CALLBACK winCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	LRESULT result = 0;
+
+	switch (uMsg) {
+	case WM_CLOSE: {}
+	case WM_DESTROY: {
+		on = 0;
+	} break;
+	case WM_SIZE: {
+		RECT screen;
+		GetClientRect(hwnd, &screen);
+		buf.b_height = screen.bottom - screen.top;
+		buf.b_width = screen.right - screen.left;
+
+		buf.buffer_size = buf.b_width * buf.b_height * sizeof(u_int);
+
+		if (buf.memory) VirtualFree(buf.memory, 0, MEM_RELEASE);
+		buf.memory = VirtualAlloc(0, buf.buffer_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+		buf.b_bitmapinfo.bmiHeader.biSize = sizeof(buf.b_bitmapinfo.bmiHeader);
+		buf.b_bitmapinfo.bmiHeader.biWidth = buf.b_width;
+		buf.b_bitmapinfo.bmiHeader.biHeight = buf.b_height;
+		buf.b_bitmapinfo.bmiHeader.biPlanes = 1;
+		buf.b_bitmapinfo.bmiHeader.biBitCount = 32;
+		buf.b_bitmapinfo.bmiHeader.biCompression = BI_RGB;
+
+	}
+
+	default: {
+		result = DefWindowProc(hwnd, uMsg, wParam, lParam);
+	}
+
+	}
+
+	return result;
+}
+
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	// Create Player to Draw
+	
+	player.player_pos_x = 0.f;
+	player.player_pos_y = 0.f;
+
+
+
+	// Create Window Class
+
+	WNDCLASS window_class = {};
+	window_class.style = CS_HREDRAW | CS_VREDRAW;
+	window_class.lpszClassName = "Game Window Class";
+	window_class.lpfnWndProc = winCallback;
+
+	// Register Window
+	RegisterClass(&window_class);
+	init_game();
+	init_server();
+
+	// Draw It
+	HWND window = CreateWindowA(window_class.lpszClassName,
+		"The Game Screen",
+		WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT,
+		CW_USEDEFAULT,
+		1280,
+		720,
+		0,
+		0,
+		hInstance,
+		0
+	);
+
+	HDC hdc = GetDC(window);
+
+	float delta_time = 0.0166666f;
+	LARGE_INTEGER frame_begin_time;
+	QueryPerformanceCounter(&frame_begin_time);
+
+	float performance_frequency;
+	{
+		LARGE_INTEGER perf;
+		QueryPerformanceFrequency(&perf);
+		performance_frequency = (float)perf.QuadPart;
+	}
+
+	while (on)
+	{
+		// Input
+		MSG message;
+
+		while (PeekMessage(&message, window, 0, 0, PM_REMOVE))
+		{
+
+			switch (message.message)
+			{
+			case WM_KEYUP: {
+
+			}
+			case WM_KEYDOWN: {
+				u_int vk_code = (u_int)message.wParam;
+				bool is_down = ((message.lParam & (1 << 31)) == 0);
+
+
+			} break;
+			default: {
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
+
+			}
+
+		}
+
+		// Simulate
+		Message p1;
+		run_server(&player);
+		clear_screen(0x00ff11);
+
+
+		for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
+		{
+			if (it->finish_block)
+			{
+				draw_checkered_block(it->x, it->y, it->half_width, it->half_height, false);
+			}
+			else
+			{
+				draw_rect(it->x, it->y, it->half_width, it->half_height, 0x0000ff);
+			}
+		}
+		for (std::list<Connection*>::iterator it2 = clients.begin(); it2 != clients.end(); ++it2)
+		{
+			draw_rect((*it2)->player.player_pos_x, (*it2)->player.player_pos_y, 0.04f, 0.04f, 0xff00ff);
+		}
+
+
+		// Render
+		StretchDIBits(hdc, 0, 0, buf.b_width, buf.b_height, 0, 0, buf.b_width, buf.b_height, buf.memory, &buf.b_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
+
+
+		LARGE_INTEGER frame_end_time;
+		QueryPerformanceCounter(&frame_end_time);
+		delta_time = (float)(frame_end_time.QuadPart - frame_begin_time.QuadPart) / performance_frequency;
+		frame_begin_time = frame_end_time;
+	}
+
 }

@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
-#include <SFML/Graphics.hpp>
+#include <SFML\Graphics.hpp>
 #include <list>
 #include "platform.h"
 #include "utils.cpp"
@@ -44,7 +44,8 @@ LRESULT CALLBACK winCallback(HWND hwnd,	UINT uMsg,	WPARAM wParam, LPARAM lParam)
 			buf.b_bitmapinfo.bmiHeader.biCompression = BI_RGB;
 
 		}
-
+		case WM_ERASEBKGND:
+			return (LRESULT)1;
 		default: {
 			result = DefWindowProc(hwnd, uMsg, wParam, lParam);
 		}
@@ -82,11 +83,32 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	);
 
 	HDC hdc = GetDC(window);
+
+
 	sf::Font font;
-	if (!font.loadFromFile("Chunk Five Print.otf"))
+	if (!font.loadFromFile("ChunkFivePrint.otf"))
 	{
 		OutputDebugString("Failed loading font\n");
 	}
+	sf::Text text;
+	// select the font
+	text.setFont(font); // font is a sf::Font
+	// set the character size
+	text.setCharacterSize(24); // in pixels, not points!
+	// set the color
+	text.setFillColor(sf::Color::Red);
+	// set the text style
+	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
+
+
+
+	// Writing Score to Screen
+	char score_buffer[128];
+	sprintf_s(score_buffer, "Score: %d\n", player.score);
+	// Grab the window dimensions.
+	RECT bounds;
+	GetClientRect(window, &bounds);
+
 
 	Input input = {};
 	float delta_time = 0.0166666f;
@@ -156,8 +178,12 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		}
 
 		// Simulate
-		run_game(&input, delta_time);
+		run_game(&input, delta_time, score_buffer);
 
+		
+
+		// The money shot!
+		DrawText(hdc, score_buffer, -1, &bounds, DT_CENTER | DT_VCENTER);
 
 		// Render
 		StretchDIBits(hdc, 0, 0, buf.b_width, buf.b_height, 0, 0, buf.b_width, buf.b_height, buf.memory, &buf.b_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);
@@ -169,4 +195,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		frame_begin_time = frame_end_time;
 	}
 	
+	//ReleaseDC(window, hdc);
+
 } 
+

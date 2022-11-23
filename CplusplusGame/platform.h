@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
+#include <SFML\Graphics.hpp>
 
 struct BUFFER_STATE {
 	void* memory;
@@ -9,3 +10,4 @@ struct BUFFER_STATE {
 
 	BITMAPINFO b_bitmapinfo;
 };
+
