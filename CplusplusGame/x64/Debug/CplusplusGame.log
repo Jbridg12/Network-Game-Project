@@ -21,5 +21,12 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,66)
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(121,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(85,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(90,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(91,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(96,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(152,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(153,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(158,48): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(123,22): warning C4018: '<': signed/unsigned mismatch
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\x64\Debug\CplusplusGame.exe

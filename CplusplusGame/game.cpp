@@ -4,7 +4,7 @@
 
 internal void run_game(Input* input, float dt, char* score_buffer);
 internal u_int run_collision(BetterRectangle adjusted_player_pos);
-internal void server_pass(char* score_buffer);
+internal void server_pass();
 
 struct Player
 {
@@ -27,6 +27,7 @@ struct Player
 	float y_acceleration;
 
 	// Server variables
+	u_int color;
 	u_int index;
 	u_int score;
 	u_int frame;
@@ -94,6 +95,7 @@ internal void init_game()
 	player.index = initial_player.index;
 	player.player_spawn_x = initial_player.newX;
 	player.player_spawn_y = initial_player.newY;
+	player.color = initial_player.color;
 
 	player.player_pos_x = player.player_spawn_x;
 	player.player_pos_y = player.player_spawn_y;
@@ -125,6 +127,7 @@ internal void init_game()
 				other_players >> new_player->player_spawn_y;
 				other_players >> new_player->frame;
 				other_players >> new_player->index;
+				other_players >> new_player->color;
 
 				new_player->player_pos_x = new_player->player_spawn_x;
 				new_player->player_pos_y = new_player->player_spawn_y;
@@ -150,7 +153,7 @@ internal void init_game()
 
 }
 
-internal void run_game(Input* input, float dt, char* score_buffer)
+internal void run_game(Input* input, float dt)
 {
 	// Update
 	//char stuff[128];
@@ -193,7 +196,8 @@ internal void run_game(Input* input, float dt, char* score_buffer)
 
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
-				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
+				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
 			}
 			
 			break;
@@ -262,8 +266,10 @@ internal void run_game(Input* input, float dt, char* score_buffer)
 
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
-				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
+				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
 			}
+			
 			break;
 
 		/*
@@ -309,18 +315,21 @@ internal void run_game(Input* input, float dt, char* score_buffer)
 			}
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
-				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, 0xff00ff);
+				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
+				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
 			}
 			break;
 		default:
 			break;
 	}
 
-	server_pass(score_buffer);
+	
+	
+	server_pass();
 	frame_count++;
 }
 
-internal void server_pass(char* score_buffer)
+internal void server_pass()
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
@@ -349,7 +358,6 @@ internal void server_pass(char* score_buffer)
 					
 					break;
 				case (PacketType::ScoreUpdate):
-					update >> score_buffer;
 					break;
 				case (PacketType::NewPlayer):
 					update >> new_player->player_spawn_x;

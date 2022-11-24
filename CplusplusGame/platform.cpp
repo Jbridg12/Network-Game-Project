@@ -102,14 +102,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 
 
-	// Writing Score to Screen
-	char score_buffer[128];
-	sprintf_s(score_buffer, "Score: %d\n", player.score);
-	// Grab the window dimensions.
-	RECT bounds;
-	GetClientRect(window, &bounds);
-
-
 	Input input = {};
 	float delta_time = 0.0166666f;
 	LARGE_INTEGER frame_begin_time;
@@ -176,14 +168,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 			}
 			
 		}
-
-		// Simulate
-		run_game(&input, delta_time, score_buffer);
-
 		
+		// Simulate
+		run_game(&input, delta_time);
 
-		// The money shot!
-		DrawText(hdc, score_buffer, -1, &bounds, DT_CENTER | DT_VCENTER);
+
 
 		// Render
 		StretchDIBits(hdc, 0, 0, buf.b_width, buf.b_height, 0, 0, buf.b_width, buf.b_height, buf.memory, &buf.b_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);

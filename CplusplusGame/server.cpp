@@ -16,6 +16,7 @@ struct Message
 	float newY;
 	u_int frame_ID;
 	u_int index;
+	u_int color;
 };
 struct WorldUpdate
 {
@@ -97,7 +98,7 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	}
 	int temp_tag;
 	player_init >> temp_tag;
-	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->index)
+	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->index >> initial_player->color)
 	{
 		OutputDebugString("Parsed initial player information.\n");
 	}

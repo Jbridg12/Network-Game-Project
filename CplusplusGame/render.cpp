@@ -79,6 +79,92 @@ draw_checkered_block(float x, float y, float half_x, float half_y, bool darken)
 	}
 }
 
+internal void
+draw_number(int num, float x, float y, float size, u_int color)
+{
+	float half_size = size * 0.5;
+
+	draw_rect(x, y, size * 4.f, size * 3.f, 0x0000000f);
+	switch (num) {
+		case 0:
+			draw_rect(x - size, y, half_size, 2.5 * size, color);
+			draw_rect(x + size, y, half_size, 2.5 * size, color);
+			draw_rect(x, y + size * 2.f, half_size, half_size, color);
+			draw_rect(x, y - size * 2.f, half_size, half_size, color);
+			break;
+		case 1:
+			draw_rect(x, y, half_size, 2.5 * size, color);
+			draw_rect(x - half_size, y + size * 2.f, half_size, half_size, color);
+			draw_rect(x, y - size * 2.f, half_size * 2.f, half_size, color);
+			break;
+		case 2:
+			draw_rect(x, y + size * 2.f, 1.5f * size, half_size, color);
+			draw_rect(x, y - size * 2.f, 1.5f * size, half_size, color);
+			draw_rect(x, y, 1.5f * size, half_size, color);
+			draw_rect(x - size, y - size, half_size, half_size, color);
+			draw_rect(x + size, y + size, half_size, half_size, color);
+			break;
+		case 3:
+			draw_rect(x - half_size, y + size * 2.f, size, half_size, color);
+			draw_rect(x - half_size, y, size, half_size, color);
+			draw_rect(x - half_size, y - size * 2.f, size, half_size, color);
+			draw_rect(x + size, y, half_size, 2.5f * size, color);
+			break;
+		case 4:
+			draw_rect(x + size, y, half_size, 2.5f * size, color);
+			draw_rect(x - size, y + size, half_size, 1.5f * size, color);
+			draw_rect(x, y, half_size, half_size, color);
+			break;
+		case 5:
+			draw_rect(x, y + size * 2.f, 1.5f * size, half_size, color);
+			draw_rect(x, y, 1.5f * size, half_size, color);
+			draw_rect(x, y - size * 2.f, 1.5f * size, half_size, color);
+			draw_rect(x - size, y + size, half_size, half_size, color);
+			draw_rect(x + size, y - size, half_size, half_size, color);
+			break;
+		case 6:
+			draw_rect(x + half_size, y + size * 2.f, size, half_size, color);
+			draw_rect(x + half_size, y, size, half_size, color);
+			draw_rect(x + half_size, y - size * 2.f, size, half_size, color);
+			draw_rect(x - size, y, half_size, 2.5f * size, color);
+			draw_rect(x + size, y - size, half_size, half_size, color);
+			break;
+		case 7: 
+			draw_rect(x + size, y, half_size, 2.5f * size, color);
+			draw_rect(x - half_size, y + size * 2.f, size, half_size, color);
+			break;
+		case 8: 
+			draw_rect(x - size, y, half_size, 2.5f * size, color);
+			draw_rect(x + size, y, half_size, 2.5f * size, color);
+			draw_rect(x, y + size * 2.f, half_size, half_size, color);
+			draw_rect(x, y - size * 2.f, half_size, half_size, color);
+			draw_rect(x, y, half_size, half_size, color);
+			break;
+		case 9: 
+			draw_rect(x - half_size, y + size * 2.f, size, half_size, color);
+			draw_rect(x - half_size, y, size, half_size, color);
+			draw_rect(x - half_size, y - size * 2.f, size, half_size, color);
+			draw_rect(x + size, y, half_size, 2.5f * size, color);
+			draw_rect(x - size, y + size, half_size, half_size, color);
+			break;
+		case 10:
+			// Draw 0
+			draw_rect(x, y, half_size, 2.5 * size, color);
+			draw_rect(x + size * 2.0f, y, half_size, 2.5 * size, color);
+			draw_rect(x + size, y + size * 2.f, half_size, half_size, color);
+			draw_rect(x + size, y - size * 2.f, half_size, half_size, color);
+
+			// Draw 1
+			draw_rect(x - size * 2.f, y, half_size, 2.5 * size, color);
+			draw_rect(x - size * 2.5f, y + size * 2.f, half_size, half_size, color);
+			draw_rect(x - size * 2.f, y - size * 2.f, half_size * 2.f, half_size, color);
+			break;
+		default:
+			break;
+
+	}
+}
+
 internal void 
 clear_screen(u_int color)
 {

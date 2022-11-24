@@ -17,7 +17,11 @@ global_variable BUFFER_STATE buf;
 sf::Font font;
 
 /*
-	TODO: Implement Packets with SFML for communication.
+	TODO: 
+	- Implement cleanup for structures and connections
+	- Implement UDP communication from server to client
+	- Add death by colliding with bottom of screen
+	- Fix score flickering
 
 */
 
@@ -36,7 +40,7 @@ struct Player
 	float player_pos_y;
 	int frame_num;
 	u_int index;
-
+	u_int color;
 };
 
 #include "render.cpp"
@@ -74,7 +78,8 @@ Player player;
 sf::UdpSocket sock;
 sf::TcpListener listener;
 std::list<Connection*> clients;
-sf::SocketSelector selector;
+
+u_int colors[4] = {0xf6c345, 0xde193e, 0x25b4ff, 0x8a2be2};
 
 void init_server()
 {
@@ -119,15 +124,17 @@ void run_server(Player* player)
 	else if (conn_status == sf::Socket::Done)
 	{
 		OutputDebugString("Client Connected\n");
-		
-		Connection* conn = new Connection;
-		conn->client = client;
-		conn->gamemode = (clients.size() == 0) ? 1 : 0;
-		conn->player = {(float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, (u_int) clients.size()};
-		setup_client(conn);
-		
-		clients.push_back(conn);
+		if (clients.size() < 4)
+		{
+			Connection* conn = new Connection;
+			conn->client = client;
+			conn->gamemode = (clients.size() == 0) ? 1 : 0;
+			conn->player = { (float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, (u_int)clients.size(), colors[clients.size()] };
+			setup_client(conn);
 
+			clients.push_back(conn);
+		}
+		
 	}
 	
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
@@ -243,7 +250,7 @@ u_int setup_client(Connection* conn)
 
 
 	sf::Packet player_start;
-	player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.index;
+	player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.index << conn->player.color;
 	sf::Socket::Status send_status = conn->client->send(player_start);
 	if (send_status == sf::Socket::Partial)
 	{
@@ -267,7 +274,7 @@ u_int setup_client(Connection* conn)
 		for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 		{
 			sf::Socket::Status send_status = (*it)->client->send(player_start);
-			all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.index;
+			all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.index << (*it)->player.color;
 		}
 		
 
@@ -466,7 +473,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		}
 		for (std::list<Connection*>::iterator it2 = clients.begin(); it2 != clients.end(); ++it2)
 		{
-			draw_rect((*it2)->player.player_pos_x, (*it2)->player.player_pos_y, 0.04f, 0.04f, 0xff00ff);
+			draw_rect((*it2)->player.player_pos_x, (*it2)->player.player_pos_y, 0.04f, 0.04f, (*it2)->player.color);
 		}
 
 
