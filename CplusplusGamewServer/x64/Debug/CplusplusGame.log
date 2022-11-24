@@ -21,6 +21,7 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(76,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(76,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\render.cpp(76,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(106,9): warning C4101: 'received': unreferenced local variable
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(458,11): warning C4101: 'p1': unreferenced local variable
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(134,59): warning C4267: '=': conversion from 'size_t' to 'unsigned short', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(238,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\platform.cpp(497,11): warning C4101: 'p1': unreferenced local variable
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGamewServer\x64\Debug\CplusplusGamewServer.exe

@@ -126,8 +126,8 @@ internal void init_game()
 				other_players >> new_player->player_spawn_x;
 				other_players >> new_player->player_spawn_y;
 				other_players >> new_player->frame;
-				other_players >> new_player->index;
 				other_players >> new_player->color;
+				other_players >> new_player->index;
 
 				new_player->player_pos_x = new_player->player_spawn_x;
 				new_player->player_pos_y = new_player->player_spawn_y;
@@ -197,7 +197,7 @@ internal void run_game(Input* input, float dt)
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
 				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
-				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
+				draw_number((*it2)->score, -1.5f + .2f * (*it2)->index, 0.9f, 0.02f, (*it2)->color);
 			}
 			
 			break;
@@ -267,7 +267,7 @@ internal void run_game(Input* input, float dt)
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
 				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
-				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
+				draw_number((*it2)->score, -1.5f + .2f * (*it2)->index, 0.9f, 0.02f, (*it2)->color);
 			}
 			
 			break;
@@ -316,7 +316,7 @@ internal void run_game(Input* input, float dt)
 			for (list<Player*>::iterator it2 = players.begin(); it2 != players.end(); ++it2)
 			{
 				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
-				draw_number(player.score, -1.3f, 0.9f, 0.02f, (*it2)->color);
+				draw_number((*it2)->score, -1.5f + .2f * (*it2)->index, 0.9f, 0.02f, (*it2)->color);
 			}
 			break;
 		default:
@@ -333,9 +333,9 @@ internal void server_pass()
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
-		sf::Packet update;
-		update << player.index << player.player_pos_x << player.player_pos_y;
-		update_server_position(update);
+		sf::Packet send_pos_update;
+		send_pos_update << player.index << player.player_pos_x << player.player_pos_y;
+		update_server_position(send_pos_update);
 	}
 
 	sf::Packet update;
@@ -363,6 +363,7 @@ internal void server_pass()
 					update >> new_player->player_spawn_x;
 					update >> new_player->player_spawn_y;
 					update >> new_player->frame;
+					update >> new_player->color;
 					update >> new_player->index;
 
 					new_player->player_pos_x = new_player->player_spawn_x;
@@ -388,6 +389,28 @@ internal void server_pass()
 
 	}
 	
+	sf::Packet pos_update;
+	sf::IpAddress sender = SERVER_IP;
+	unsigned short server_port_udp = SERVER_PORT_UDP;
+	sf::Socket::Status status_udp = socket_udp.receive(pos_update, sender, server_port_udp);
+	if (status_udp == sf::Socket::Done)
+	{
+		float newX;
+		float newY;
+		u_int index;
+		if (pos_update >> index >> newX >> newY)
+		{
+			std::list<Player*>::iterator it = players.begin();
+			for (int i = 0; i < index; i++)
+			{
+				it++;
+			}
+
+			(*it)->player_pos_x = newX;
+			(*it)->player_pos_y = newY;
+		}
+	}
+
 }
 
 internal u_int run_collision(BetterRectangle adjusted_player_pos)
@@ -399,8 +422,6 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 		Keep player on screen.
 	*/
 	if (adjusted_player_pos.x0 < 0 ||
-		adjusted_player_pos.x0 > buf.b_width ||
-		adjusted_player_pos.x1 < 0 ||
 		adjusted_player_pos.x1 > buf.b_width
 		)
 	{
@@ -409,16 +430,26 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 		player.x_acceleration = 0.f;
 	}
 
-	if (adjusted_player_pos.y0 < 0 ||
+
+	/* old if block
+		if (adjusted_player_pos.y0 < 0 ||
 		adjusted_player_pos.y0 > buf.b_height ||
 		adjusted_player_pos.y1 < 0 ||
 		adjusted_player_pos.y1 > buf.b_height
 		)
+	*/
+	if (adjusted_player_pos.y0 < 0)
 	{
 		player.player_pos_y = player.player_old_y;
 		player.y_speed *= 0.f;
 		player.y_acceleration = 0.f;
-		//return 0;
+		//return 2;
+	}
+	else if (adjusted_player_pos.y1 > buf.b_height)
+	{
+		player.player_pos_y = player.player_old_y;
+		player.y_speed *= 0.f;
+		player.y_acceleration = 0.f;
 	}
 
 	for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)

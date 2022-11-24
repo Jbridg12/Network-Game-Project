@@ -84,24 +84,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 	HDC hdc = GetDC(window);
 
-
-	sf::Font font;
-	if (!font.loadFromFile("ChunkFivePrint.otf"))
-	{
-		OutputDebugString("Failed loading font\n");
-	}
-	sf::Text text;
-	// select the font
-	text.setFont(font); // font is a sf::Font
-	// set the character size
-	text.setCharacterSize(24); // in pixels, not points!
-	// set the color
-	text.setFillColor(sf::Color::Red);
-	// set the text style
-	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
-
-
-
 	Input input = {};
 	float delta_time = 0.0166666f;
 	LARGE_INTEGER frame_begin_time;
@@ -171,8 +153,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 		
 		// Simulate
 		run_game(&input, delta_time);
-
-
 
 		// Render
 		StretchDIBits(hdc, 0, 0, buf.b_width, buf.b_height, 0, 0, buf.b_width, buf.b_height, buf.memory, &buf.b_bitmapinfo, DIB_RGB_COLORS, SRCCOPY);

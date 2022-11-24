@@ -3,25 +3,21 @@
 #define SERVER_IP "127.0.0.1"
 
 
-// TODO  - restructure heirarchy to better fit data structures
-//		aka move some structs back to game.cpp and abstract the
-//		references
+// TODO  
 //
 //		- Implement better error checking in network code
-//
+//		- Speed problems when moving a lot
 
 struct Message
 {
 	float newX;
 	float newY;
 	u_int frame_ID;
-	u_int index;
 	u_int color;
+	u_int index;
 };
 struct WorldUpdate
 {
-	// Needs to not require PlaceBlock defined here
-	// TODO later
 	float start_x;
 	float start_y;
 	float start_half_width;
@@ -45,18 +41,20 @@ enum PacketType
 	PacketTypes
 };
 sf::IpAddress ip;
-unsigned short udp_port;
+unsigned short udp_port; 
+unsigned short server_udp_port;
+sf::UdpSocket socket_udp;
 sf::TcpSocket socket_tcp;
 
 internal void init_server_connection(WorldUpdate* initial_world,
 									 Message* initial_player,
 									 sf::Packet* other_players,
 									 sf::IpAddress new_ip = SERVER_IP,
-									 unsigned short new_udp_port = SERVER_PORT_UDP
+									 unsigned short new_server_udp_port = SERVER_PORT_UDP
 									)
 {
+	server_udp_port = SERVER_PORT_UDP;
 	ip = new_ip;
-	udp_port = new_udp_port;
 
 	sf::Socket::Status status = socket_tcp.connect(ip, SERVER_PORT_TCP);
 	if (status != sf::Socket::Done)
@@ -96,11 +94,24 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	{
 		OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
 	}
+
 	int temp_tag;
 	player_init >> temp_tag;
-	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->index >> initial_player->color)
+	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->color)
 	{
 		OutputDebugString("Parsed initial player information.\n");
+	}
+
+	u_int index;
+	player_init >> index;
+	initial_player->index = index;
+	udp_port = server_udp_port + 1 + index;
+
+	// bind the socket to a port
+	if (socket_udp.bind(udp_port) != sf::Socket::Done)
+	{
+		printf("UDP bind failed\n");
+		return;
 	}
 
 	// After first player requires more 
@@ -114,14 +125,15 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	}
 
 	socket_tcp.setBlocking(false);
+	socket_udp.setBlocking(false);
 	return;
 }
 
 internal void update_server_position(sf::Packet update)
 {
-	sf::UdpSocket socket;
 
-	if (socket.send(update, ip, udp_port) != sf::Socket::Done)
+	unsigned short server_port_udp = SERVER_PORT_UDP;
+	if (socket_udp.send(update, ip, server_port_udp) != sf::Socket::Done)
 	{
 		printf("Send Error\n");
 		return;
