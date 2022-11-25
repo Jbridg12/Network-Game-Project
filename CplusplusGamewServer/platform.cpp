@@ -19,9 +19,10 @@ sf::Font font;
 /*
 	TODO: 
 	- Implement cleanup for structures and connections
-	- Implement UDP communication from server to client
 	- Add death by colliding with bottom of screen
-
+	- Add text to indicate the turn changes
+	- Also add text to show the beginning of the game
+	- Score
 */
 
 
@@ -60,8 +61,9 @@ struct Connection
 	u_int gamemode;
 
 	Player player;
-	// TODO implement id for each client
+	u_int score;
 };
+
 enum PacketType
 {
 	NextTurn,
@@ -75,8 +77,10 @@ u_int world_update(sf::TcpSocket* client, sf::Packet current_update);
 u_int next_turn(Connection* conn);
 void update_player_position(u_int index, float newX, float newY);
 void send_new_block(u_int index, float x, float y, float half_width, float half_height);
+void send_score_update();
 
 Player player;
+u_int current_round;
 sf::UdpSocket socket_udp;
 sf::TcpListener listener;
 std::list<Connection*> clients;
@@ -102,6 +106,7 @@ void init_server()
 		return;
 	}
 	clients = {};
+	current_round = 0;
 }
 
 void run_server(Player* player)
@@ -131,6 +136,7 @@ void run_server(Player* player)
 			Connection* conn = new Connection;
 			conn->client = client;
 			conn->client_UDP = SERVER_PORT_UDP + 1 + clients.size();
+			conn->score = 0;
 			conn->gamemode = (clients.size() == 0) ? 1 : 0;
 			conn->player = { (float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, colors[clients.size()], (u_int) clients.size() };
 			setup_client(conn);
@@ -178,6 +184,7 @@ void run_server(Player* player)
 								u_int next_gamemode = (*it)->gamemode;
 								if (next_index == clients.size())
 								{
+									current_round++;
 									next_index = 0;
 									next_gamemode = 3 - (*it)->gamemode;
 								}
@@ -215,6 +222,8 @@ void run_server(Player* player)
 						}
 						break;
 					case (PacketType::ScoreUpdate):
+						(*it)->score++;
+						send_score_update();
 						break;
 				}
 			}
@@ -224,8 +233,6 @@ void run_server(Player* player)
 		}
 	}
 
-
-	// TODO implement constant server loop features
 	// Including fix UDP
 
 	// UDP Stuff
@@ -278,7 +285,15 @@ void run_server(Player* player)
 u_int setup_client(Connection* conn)
 {
 	sf::Packet initial_world;
-	initial_world << 1; // Initial Gamemode
+
+	if (!clients.size())
+	{
+		initial_world << 1; // Initial Gamemode playing for p1
+	}
+	else
+	{
+		initial_world << 0; // Initial Gamemode waiting for p2-4
+	}
 	initial_world << (int) all_game_blocks.size(); // Number of blocks to expect
 	for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
 	{
@@ -417,8 +432,26 @@ void send_new_block(u_int index, float x, float y, float half_width, float half_
 		}
 	}
 }
-// Windows Stuff
 
+void send_score_update()
+{
+	sf::Packet update;
+	update << PacketType::ScoreUpdate;
+	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		update << (*it)->score;
+	}
+	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if ((*it)->client->send(update) != sf::Socket::Done)
+		{
+			printf("Send Error\n");
+			return;
+		}
+	}
+}
+
+// Windows Stuff
 LRESULT CALLBACK winCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;

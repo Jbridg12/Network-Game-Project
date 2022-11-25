@@ -183,3 +183,15 @@ internal u_int server_new_block_update(sf::Packet block_update, float* x, float*
 	return 0;
 
 }
+
+internal void server_send_score_update()
+{
+	sf::Packet score;
+	score << PacketType::ScoreUpdate;
+	sf::Socket::Status status = socket_tcp.send(score);
+	if (status == sf::Socket::Done)
+	{
+		OutputDebugString("Sent a new block \n");
+	}
+	return;
+}

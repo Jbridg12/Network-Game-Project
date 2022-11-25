@@ -151,9 +151,6 @@ internal void init_game()
 internal void run_game(Input* input, float dt)
 {
 	// Update
-	//char stuff[128];
-	//sprintf_s(stuff, "X: %f | Y: %f\n", player.player_pos_x, player.player_pos_y);
-	//OutputDebugString(stuff);
 	clear_screen(0x00ff11);
 
 
@@ -235,7 +232,7 @@ internal void run_game(Input* input, float dt)
 			collision_result = run_collision(adjusted_player_position);
 			if (collision_result > 0)
 			{
-				if (collision_result == 1) player.score++;
+				if (collision_result == 1) server_send_score_update();
 				player.player_pos_x = player.player_spawn_x;
 				player.player_pos_y = player.player_spawn_y;
 				player.x_speed = 0.f;
@@ -342,6 +339,7 @@ internal void server_pass()
 		{
 			PlacedBlock new_block;
 			Player* new_player = new Player;
+			std::list<Player*>::iterator it = players.begin();
 			switch (header)
 			{
 				case (PacketType::NextTurn):
@@ -353,6 +351,12 @@ internal void server_pass()
 					
 					break;
 				case (PacketType::ScoreUpdate):
+					u_int new_score;
+					while (update >> new_score) 
+					{
+						(*it)->score = new_score;
+						it++;
+					}
 					break;
 				case (PacketType::NewPlayer):
 					update >> new_player->player_spawn_x;

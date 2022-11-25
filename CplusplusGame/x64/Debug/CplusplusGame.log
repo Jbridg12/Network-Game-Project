@@ -29,5 +29,5 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(152,35
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(153,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(158,48): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(118,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(399,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(403,22): warning C4018: '<': signed/unsigned mismatch
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\x64\Debug\CplusplusGame.exe
