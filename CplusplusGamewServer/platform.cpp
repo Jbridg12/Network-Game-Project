@@ -21,7 +21,6 @@ sf::Font font;
 	- Implement cleanup for structures and connections
 	- Implement UDP communication from server to client
 	- Add death by colliding with bottom of screen
-	- Fix score flickering
 
 */
 
@@ -173,13 +172,37 @@ void run_server(Player* player)
 						if (packet >> index)
 						{
 							// TEMP
-							(*it)->gamemode = ((*it)->gamemode + 1) % 3;
-							if ((index + 1) < clients.size())
+							if (clients.size() > 1)
 							{
-								// TODO: Send next client in list the signal for next turn
+								u_int next_index = index + 1;
+								u_int next_gamemode = (*it)->gamemode;
+								if (next_index == clients.size())
+								{
+									next_index = 0;
+									next_gamemode = 3 - (*it)->gamemode;
+								}
+
+								std::list<Connection*>::iterator it2 = clients.begin();
+								for (int i = 0; i < next_index; i++)
+								{
+									it2++;
+								}
+								
+								// Send to next player
+								(*it2)->gamemode = next_gamemode;
+								next_turn(*it2);
+								
+								// Send to current player
+								(*it)->gamemode = 0;
+								next_turn(*it);
+							}
+							else
+							{
+								OutputDebugString("Don't play by yourself\n");
+								return;
 							}
 
-							next_turn(*it);
+							
 						}
 						break;
 					case (PacketType::NewBlock):
@@ -254,10 +277,27 @@ void run_server(Player* player)
 
 u_int setup_client(Connection* conn)
 {
-	sf::Packet current_update;
-	current_update << start.x << start.y << start.half_width << start.half_height << finish.x << finish.y << finish.half_width << finish.half_height << 1;
-	world_update(conn->client, current_update);
+	sf::Packet initial_world;
+	initial_world << 1; // Initial Gamemode
+	initial_world << (int) all_game_blocks.size(); // Number of blocks to expect
+	for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
+	{
+		initial_world << (*it).x << (*it).y << (*it).half_width << (*it).half_height << (*it).finish_block;
+	}
 
+	sf::Socket::Status world_send_status = conn->client->send(initial_world);
+	if (world_send_status == sf::Socket::Partial)
+	{
+		while (conn->client->send(initial_world) == sf::Socket::Partial)
+		{
+			//OutputDebugString("Only Parts\n");
+		}
+	}
+	if (world_send_status != sf::Socket::Done)
+	{
+		OutputDebugString("These error messages go nowhere but anyway world update failed.");
+		return -1;
+	}
 
 	sf::Packet player_start;
 	player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.color << conn->player.index ;
@@ -366,7 +406,7 @@ void update_player_position(u_int index, float newX, float newY)
 void send_new_block(u_int index, float x, float y, float half_width, float half_height)
 {
 	sf::Packet update;
-	update << index << x << y << half_width << half_height;
+	update << PacketType::NewBlock << x << y << half_width << half_height;
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
 		if ((*it)->player.index == index) continue;

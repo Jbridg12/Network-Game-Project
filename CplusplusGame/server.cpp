@@ -46,7 +46,7 @@ unsigned short server_udp_port;
 sf::UdpSocket socket_udp;
 sf::TcpSocket socket_tcp;
 
-internal void init_server_connection(WorldUpdate* initial_world,
+internal void init_server_connection(sf::Packet* initial_world,
 									 Message* initial_player,
 									 sf::Packet* other_players,
 									 sf::IpAddress new_ip = SERVER_IP,
@@ -63,8 +63,7 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	}
 
 	// Recieve initial World Status via TCP
-	sf::Packet world_init;
-	sf::Socket::Status initial_world_update_status = socket_tcp.receive(world_init);
+	sf::Socket::Status initial_world_update_status = socket_tcp.receive(*initial_world);
 	if (initial_world_update_status == sf::Socket::Partial)
 	{
 		//while ()
@@ -74,12 +73,7 @@ internal void init_server_connection(WorldUpdate* initial_world,
 	{
 		OutputDebugString("These error messages go nowhere but anyway world update failed.\n");
 	}
-	if (world_init >> initial_world->start_x >> initial_world->start_y >> initial_world->start_half_width >> initial_world->start_half_height
-		>> initial_world->finish_x >> initial_world->finish_y >> initial_world->finish_half_width >> initial_world->finish_half_height
-		>> initial_world->current_gamemode)
-	{
-		OutputDebugString("Parsed initial world information.\n");
-	}
+
 
 
 	// Recieve intial player position via TCP
@@ -132,8 +126,7 @@ internal void init_server_connection(WorldUpdate* initial_world,
 internal void update_server_position(sf::Packet update)
 {
 
-	unsigned short server_port_udp = SERVER_PORT_UDP;
-	if (socket_udp.send(update, ip, server_port_udp) != sf::Socket::Done)
+	if (socket_udp.send(update, ip, server_udp_port) != sf::Socket::Done)
 	{
 		printf("Send Error\n");
 		return;

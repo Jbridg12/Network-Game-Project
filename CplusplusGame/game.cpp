@@ -64,30 +64,25 @@ internal void init_game()
 	// Initialize
 
 	// Parse information about client from the server
-	WorldUpdate initial_world;
+	sf::Packet initial_world;
 	Message initial_player;
 	sf::Packet other_players;
 	init_server_connection(&initial_world, &initial_player, &other_players);
 
 	// Using server world info, set up the gamespace
-	current_gamemode = (GAMEMODE) initial_world.current_gamemode;
+	int g_temp;
+	initial_world >> g_temp;
+	current_gamemode = (GAMEMODE) g_temp;
 
-	PlacedBlock start {
-		initial_world.start_x,
-		initial_world.start_y,
-		initial_world.start_half_width,
-		initial_world.start_half_height,
-		initial_world.start_finish_block
-	};
-
-	PlacedBlock finish {
-		initial_world.finish_x,
-		initial_world.finish_y,
-		initial_world.finish_half_width,
-		initial_world.finish_half_height,
-		initial_world.finish_block
-	};
-	all_game_blocks = {start, finish};
+	int blocks;
+	initial_world >> blocks;
+	all_game_blocks = {};
+	for (int i = 0; i < blocks; i++)
+	{
+		PlacedBlock new_block;
+		initial_world >> new_block.x >> new_block.y >> new_block.half_width >> new_block.half_height >> new_block.finish_block;
+		all_game_blocks.push_back(new_block);
+	}
 
 	//---------------------------------------------------------------------------
 
