@@ -22,7 +22,6 @@ sf::Font font;
 	- Add death by colliding with bottom of screen
 	- Add text to indicate the turn changes
 	- Also add text to show the beginning of the game
-	- Score
 */
 
 
@@ -50,9 +49,10 @@ void init_server();
 void run_server(Player* player);
 
 #define SERVER_PORT_UDP 54000
-#define SERVER_POT_TCP 53000
+#define SERVER_PORT_TCP 53000
 #define SERVER_IP "127.0.0.1"
-
+#define RESET_TIMER 600
+#define MAX_ROUND 3
 
 struct Connection
 {
@@ -70,17 +70,28 @@ enum PacketType
 	NewBlock,
 	ScoreUpdate,
 	NewPlayer,
+	EndOfGame,
+	Reset,
 	PacketTypes
 };
-u_int setup_client(Connection* conn);
+u_int setup_client(Connection* conn, bool initial = true);
 u_int world_update(sf::TcpSocket* client, sf::Packet current_update);
 u_int next_turn(Connection* conn);
+void end_game(Connection* conn, u_int result);
+void reset(Connection* conn);
 void update_player_position(u_int index, float newX, float newY);
 void send_new_block(u_int index, float x, float y, float half_width, float half_height);
 void send_score_update();
 
 Player player;
+
 u_int current_round;
+u_int high_score;
+u_int tie;
+u_int timer;
+bool end_of_game;
+
+
 sf::UdpSocket socket_udp;
 sf::TcpListener listener;
 std::list<Connection*> clients;
@@ -99,14 +110,19 @@ void init_server()
 		printf("UDP bind failed\n");
 		return;
 	}
-
-	if (listener.listen(SERVER_POT_TCP) != sf::Socket::Done)
+	//sf::IpAddress public_address = sf::IpAddress::getPublicAddress(sf::seconds(3));
+	if (listener.listen(SERVER_PORT_TCP) != sf::Socket::Done)
 	{
 		printf("TCP bind failed\n");
 		return;
 	}
+
 	clients = {};
 	current_round = 0;
+	high_score = 0;
+	tie = 0;
+	timer = 0;
+	end_of_game = false;
 }
 
 void run_server(Player* player)
@@ -167,6 +183,7 @@ void run_server(Player* player)
 		else if (recv == sf::Socket::Done)
 		{
 			int header;
+			int end_mode = 0;
 			if (packet >> header)
 			{
 				switch (header)
@@ -177,16 +194,51 @@ void run_server(Player* player)
 						u_int index;
 						if (packet >> index)
 						{
-							// TEMP
 							if (clients.size() > 1)
 							{
 								u_int next_index = index + 1;
 								u_int next_gamemode = (*it)->gamemode;
 								if (next_index == clients.size())
 								{
-									current_round++;
+									if ((*it)->gamemode == 2)
+									{
+										current_round++;
+										if (current_round >= MAX_ROUND)
+										{
+											end_of_game = 1;
+											for (std::list<Connection*>::iterator tie_check = clients.begin(); tie_check != clients.end(); tie_check++)
+											{
+												if ((*tie_check)->score == high_score) tie++;
+											}
+											for (std::list<Connection*>::iterator it2 = clients.begin(); it2 != clients.end(); it2++)
+											{
+												if ((*it2)->score < high_score)
+												{
+													end_game(*it2, 0);
+
+												}
+												else
+												{
+													if (tie > 1)
+													{
+														end_game(*it2, 2);
+													}
+													else
+													{
+														end_game(*it2, 1);
+													}
+												}
+											}
+
+											return;
+
+										}
+
+									}
+									
 									next_index = 0;
 									next_gamemode = 3 - (*it)->gamemode;
+									
 								}
 
 								std::list<Connection*>::iterator it2 = clients.begin();
@@ -194,14 +246,15 @@ void run_server(Player* player)
 								{
 									it2++;
 								}
-								
+
 								// Send to next player
 								(*it2)->gamemode = next_gamemode;
 								next_turn(*it2);
-								
+
 								// Send to current player
 								(*it)->gamemode = 0;
 								next_turn(*it);
+								
 							}
 							else
 							{
@@ -222,6 +275,7 @@ void run_server(Player* player)
 						}
 						break;
 					case (PacketType::ScoreUpdate):
+						if ((*it)->score == high_score) high_score++;
 						(*it)->score++;
 						send_score_update();
 						break;
@@ -232,8 +286,6 @@ void run_server(Player* player)
 			
 		}
 	}
-
-	// Including fix UDP
 
 	// UDP Stuff
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
@@ -280,13 +332,38 @@ void run_server(Player* player)
 		}
 	}
 	
+	if (end_of_game)
+	{
+		if (timer++ >= RESET_TIMER)
+		{
+			init_game();
+			for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+			{
+				reset(*it);
+				(*it)->player.player_pos_x = (float)(-1.6f + ((*it)->player.index * 0.2));
+				(*it)->player.player_pos_y = -0.5f;
+				(*it)->score = 0;
+				(*it)->gamemode = ((*it)->player.index == 0) ? 1 : 0;
+				setup_client((*it), false);
+			}
+
+			current_round = 0;
+			high_score = 0;
+			tie = 0;
+			timer = 0;
+			end_of_game = false;
+
+		}
+	}
+
+
 }
 
-u_int setup_client(Connection* conn)
+u_int setup_client(Connection* conn, bool initial)
 {
 	sf::Packet initial_world;
 
-	if (!clients.size())
+	if (!(conn->player.index))
 	{
 		initial_world << 1; // Initial Gamemode playing for p1
 	}
@@ -294,6 +371,7 @@ u_int setup_client(Connection* conn)
 	{
 		initial_world << 0; // Initial Gamemode waiting for p2-4
 	}
+
 	initial_world << (int) all_game_blocks.size(); // Number of blocks to expect
 	for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
 	{
@@ -314,45 +392,50 @@ u_int setup_client(Connection* conn)
 		return -1;
 	}
 
-	sf::Packet player_start;
-	player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.color << conn->player.index ;
-	sf::Socket::Status send_status = conn->client->send(player_start);
-	if (send_status == sf::Socket::Partial)
+	if (initial)
 	{
-		while (conn->client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
+		sf::Packet player_start;
+		player_start << PacketType::NewPlayer << conn->player.player_pos_x << conn->player.player_pos_y << conn->player.frame_num << conn->player.color << conn->player.index;
+		sf::Socket::Status send_status = conn->client->send(player_start);
+		if (send_status == sf::Socket::Partial)
 		{
-			//OutputDebugString("Only Parts\n");
+			while (conn->client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
+			{
+				//OutputDebugString("Only Parts\n");
+			}
+			OutputDebugString("Only Parts\n");
 		}
-		OutputDebugString("Only Parts\n");
-	}
-	if (send_status != sf::Socket::Done)
-	{
-		OutputDebugString("These error messages go nowhere but anyway world update failed.");
-		return 0;
-	}
-
-
-	// Update all other clients to recognize have new player in game
-	if (!clients.empty())
-	{
-		sf::Packet all_players;
-		all_players << (int) clients.size();
-		for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
-		{
-			sf::Socket::Status send_status = (*it)->client->send(player_start);
-			all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.color << (*it)->player.index ;
-		}
-		
-
-		sf::Socket::Status send_status2 = conn->client->send(all_players);
 		if (send_status != sf::Socket::Done)
 		{
-			//OutputDebugString("These error messages go nowhere but anyway world update failed.");
-			return -1;
+			OutputDebugString("These error messages go nowhere but anyway world update failed.");
+			return 0;
 		}
 
+		// Update all other clients to recognize have new player in game
+		if (!clients.empty())
+		{
+			sf::Packet all_players;
+			all_players << (int)clients.size();
+			for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+			{
+				sf::Socket::Status send_status = (*it)->client->send(player_start);
+				all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.color << (*it)->player.index;
+			}
+
+
+			sf::Socket::Status send_status2 = conn->client->send(all_players);
+			if (send_status != sf::Socket::Done)
+			{
+				//OutputDebugString("These error messages go nowhere but anyway world update failed.");
+				return -1;
+			}
+
+		}
+
+		conn->client->setBlocking(false);
 	}
-	conn->client->setBlocking(false);
+		
+
 	return 1;
 }
 
@@ -378,8 +461,6 @@ u_int world_update(sf::TcpSocket* client, sf::Packet current_update)
 
 u_int next_turn(Connection* conn)
 {
-	// TODO: make new struct for each type
-	//		 of message the user sends/recieves
 	sf::Packet next_turn_message;
 	next_turn_message << PacketType::NextTurn << conn->gamemode;
 
@@ -401,6 +482,32 @@ u_int next_turn(Connection* conn)
 	}
 
 	return 1;
+}
+
+void end_game(Connection* conn, u_int result)
+{
+	sf::Packet end_game;
+	end_game << PacketType::EndOfGame << result;
+
+	sf::Socket::Status send = conn->client->send(end_game);
+	if (send != sf::Socket::Done)
+	{
+		OutputDebugString("Send failed\n");
+		return;
+	}
+}
+
+void reset(Connection* conn)
+{
+	sf::Packet reset;
+	reset << PacketType::Reset;
+
+	sf::Socket::Status send = conn->client->send(reset);
+	if (send != sf::Socket::Done)
+	{
+		OutputDebugString("Send failed\n");
+		return;
+	}
 }
 
 void update_player_position(u_int index, float newX, float newY)

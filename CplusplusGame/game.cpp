@@ -45,29 +45,37 @@ struct PlacedBlock
 enum GAMEMODE
 {
 	Waiting,
-	Playing,
 	Placing,
+	Playing,
 	Gamemode_Count
 };
 
-GAMEMODE current_gamemode;
-
-list<Player*> players;
-Player player;
-u_int frame_count;
-bool my_turn = true;
 bool spawned_next_platform = false;
-list<PlacedBlock> all_game_blocks;
+bool end_of_game = false;
+u_int frame_count;
+u_int result;
 
-internal void init_game()
+Player player;
+GAMEMODE current_gamemode;
+list<PlacedBlock> all_game_blocks;
+list<Player*> players;
+
+internal void init_game(bool initial = true)
 {
 	// Initialize
+	end_of_game = false;
+	all_game_blocks = {};
+	result = 0;
+	frame_count = 0;
+
+	if (initial)
+		players = {};
 
 	// Parse information about client from the server
 	sf::Packet initial_world;
 	Message initial_player;
 	sf::Packet other_players;
-	init_server_connection(&initial_world, &initial_player, &other_players);
+	init_server_connection(&initial_world, &initial_player, &other_players, initial);
 
 	// Using server world info, set up the gamespace
 	int g_temp;
@@ -76,7 +84,6 @@ internal void init_game()
 
 	int blocks;
 	initial_world >> blocks;
-	all_game_blocks = {};
 	for (int i = 0; i < blocks; i++)
 	{
 		PlacedBlock new_block;
@@ -86,64 +93,82 @@ internal void init_game()
 
 	//---------------------------------------------------------------------------
 
-	// Read Player starting position from server
-	player.index = initial_player.index;
-	player.player_spawn_x = initial_player.newX;
-	player.player_spawn_y = initial_player.newY;
-	player.color = initial_player.color;
-
-	player.player_pos_x = player.player_spawn_x;
-	player.player_pos_y = player.player_spawn_y;
-	player.player_half_width = 0.04f;
-	player.player_half_height = 0.04f;
-	player.x_speed = 0.f;
-	player.y_speed = 0.f;
-	player.x_acceleration = 0.f;
-	player.y_acceleration = 0.f;
-
-	player.player_old_x = player.player_pos_x;
-	player.player_old_y = player.player_pos_y;
-	player.frame = initial_player.frame_ID;
-	frame_count = player.frame;
-	player.score = 0;
-
-	//--------------------------------------------------------------------------
-
-	// Read other players status from server
-	if (player.index != 0)
+	if (initial)
 	{
-		u_int player_count;
-		if (other_players >> player_count)
+		// Read Player starting position from server
+		player.index = initial_player.index;
+		player.player_spawn_x = initial_player.newX;
+		player.player_spawn_y = initial_player.newY;
+		player.color = initial_player.color;
+
+		player.player_pos_x = player.player_spawn_x;
+		player.player_pos_y = player.player_spawn_y;
+		player.player_half_width = 0.04f;
+		player.player_half_height = 0.04f;
+		player.x_speed = 0.f;
+		player.y_speed = 0.f;
+		player.x_acceleration = 0.f;
+		player.y_acceleration = 0.f;
+
+		player.player_old_x = player.player_pos_x;
+		player.player_old_y = player.player_pos_y;
+		player.frame = initial_player.frame_ID;
+		frame_count = player.frame;
+		player.score = 0;
+
+		//--------------------------------------------------------------------------
+
+		// Read other players status from server
+		if (player.index != 0)
 		{
-			for (int i = 0; i < player_count; i++)
+			u_int player_count;
+			if (other_players >> player_count)
 			{
-				Player* new_player = new Player;
-				other_players >> new_player->player_spawn_x;
-				other_players >> new_player->player_spawn_y;
-				other_players >> new_player->frame;
-				other_players >> new_player->color;
-				other_players >> new_player->index;
+				for (int i = 0; i < player_count; i++)
+				{
+					Player* new_player = new Player;
+					other_players >> new_player->player_spawn_x;
+					other_players >> new_player->player_spawn_y;
+					other_players >> new_player->frame;
+					other_players >> new_player->color;
+					other_players >> new_player->index;
 
-				new_player->player_pos_x = new_player->player_spawn_x;
-				new_player->player_pos_y = new_player->player_spawn_y;
-				new_player->player_half_width = 0.04f;
-				new_player->player_half_height = 0.04f;
-				new_player->x_speed = 0.f;
-				new_player->y_speed = 0.f;
-				new_player->x_acceleration = 0.f;
-				new_player->y_acceleration = 0.f;
+					new_player->player_pos_x = new_player->player_spawn_x;
+					new_player->player_pos_y = new_player->player_spawn_y;
+					new_player->player_half_width = 0.04f;
+					new_player->player_half_height = 0.04f;
+					new_player->x_speed = 0.f;
+					new_player->y_speed = 0.f;
+					new_player->x_acceleration = 0.f;
+					new_player->y_acceleration = 0.f;
 
-				new_player->player_old_x = new_player->player_pos_x;
-				new_player->player_old_y = new_player->player_pos_y;
-				
-				new_player->score = 0;
+					new_player->player_old_x = new_player->player_pos_x;
+					new_player->player_old_y = new_player->player_pos_y;
 
-				players.push_back(new_player);
+					new_player->score = 0;
+
+					players.push_back(new_player);
+				}
 			}
 		}
+		players.push_back(&player);
 	}
-	players.push_back(&player);
-
+	else
+	{
+		for (std::list<Player*>::iterator it = players.begin(); it != players.end(); it++)
+		{
+			(*it)->player_pos_x = (*it)->player_spawn_x;
+			(*it)->player_pos_y = (*it)->player_spawn_y;
+			(*it)->player_old_x = (*it)->player_pos_x;
+			(*it)->player_old_y = (*it)->player_pos_y;
+			(*it)->frame = 0;
+			(*it)->x_speed = 0.f;
+			(*it)->y_speed = 0.f;
+			(*it)->x_acceleration = 0.f;
+			(*it)->y_acceleration = 0.f;
+			(*it)->score = 0;
+		}
+	}
 	return;
 
 }
@@ -152,7 +177,6 @@ internal void run_game(Input* input, float dt)
 {
 	// Update
 	clear_screen(0x00ff11);
-
 
 	u_int collision_result = 1;
 	bool turn_end = false;
@@ -191,6 +215,11 @@ internal void run_game(Input* input, float dt)
 				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
 				draw_number((*it2)->score, -1.5f + .2f * (*it2)->index, 0.9f, 0.02f, (*it2)->color);
 			}
+
+			if (end_of_game)
+			{
+				draw_result(result, player.color);
+			}
 			
 			break;
 		/*
@@ -201,9 +230,9 @@ internal void run_game(Input* input, float dt)
 			if (is_down(BUTTON_D)) player.x_acceleration += 30;
 			if (pressed(BUTTON_SPACE))
 			{
-				player.y_acceleration += 1000;
-				//if (grounded)
-					//player.y_acceleration += 1000;
+				//player.y_acceleration += 1000;
+				if (grounded)
+					player.y_acceleration += 700;
 			}
 
 
@@ -261,7 +290,7 @@ internal void run_game(Input* input, float dt)
 				draw_rect((*it2)->player_pos_x, (*it2)->player_pos_y, (*it2)->player_half_width, (*it2)->player_half_height, (*it2)->color);
 				draw_number((*it2)->score, -1.5f + .2f * (*it2)->index, 0.9f, 0.02f, (*it2)->color);
 			}
-			
+
 			break;
 
 		/*
@@ -273,27 +302,24 @@ internal void run_game(Input* input, float dt)
 				server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
 				server_send_next_turn(player.index);
 			}
-
-			if (my_turn)
-			{
-				if (!spawned_next_platform) {
-					PlacedBlock new_platform;
-
-					new_platform.x = 0.f;
-					new_platform.y = 0.f;
-					new_platform.half_width = 0.1f;
-					new_platform.half_height = 0.05f;
-					all_game_blocks.push_back(new_platform);
-
-					spawned_next_platform = true;
-				}
-
-				if (is_down(BUTTON_W)) all_game_blocks.back().y += 1 * all_game_blocks.back().speed;
-				if (is_down(BUTTON_S)) all_game_blocks.back().y -= 1 * all_game_blocks.back().speed;
-				if (is_down(BUTTON_A)) all_game_blocks.back().x -= 1 * all_game_blocks.back().speed;
-				if (is_down(BUTTON_D)) all_game_blocks.back().x += 1 * all_game_blocks.back().speed;
-			}
 			
+			if (!spawned_next_platform) {
+				PlacedBlock new_platform;
+
+				new_platform.x = 0.f;
+				new_platform.y = 0.f;
+				new_platform.half_width = 0.1f;
+				new_platform.half_height = 0.05f;
+				all_game_blocks.push_back(new_platform);
+
+				spawned_next_platform = true;
+			}
+
+			if (is_down(BUTTON_W)) all_game_blocks.back().y += 1 * all_game_blocks.back().speed;
+			if (is_down(BUTTON_S)) all_game_blocks.back().y -= 1 * all_game_blocks.back().speed;
+			if (is_down(BUTTON_A)) all_game_blocks.back().x -= 1 * all_game_blocks.back().speed;
+			if (is_down(BUTTON_D)) all_game_blocks.back().x += 1 * all_game_blocks.back().speed;
+
 			for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); ++it)
 			{
 				if (it->finish_block)
@@ -315,8 +341,6 @@ internal void run_game(Input* input, float dt)
 			break;
 	}
 
-	
-	
 	server_pass();
 	frame_count++;
 }
@@ -381,6 +405,16 @@ internal void server_pass()
 
 					players.push_back(new_player);
 					break;
+				case (PacketType::EndOfGame):
+					if (update >> result)
+					{
+						end_of_game = true;
+						current_gamemode = GAMEMODE::Waiting;
+					}
+					break;
+				case (PacketType::Reset):
+					init_game(false);
+					break;
 				default:
 					break;
 			}
@@ -442,7 +476,7 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 		player.player_pos_y = player.player_old_y;
 		player.y_speed *= 0.f;
 		player.y_acceleration = 0.f;
-		//return 2;
+		return 2;
 	}
 	else if (adjusted_player_pos.y1 > buf.b_height)
 	{

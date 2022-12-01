@@ -38,6 +38,8 @@ enum PacketType
 	NewBlock,
 	ScoreUpdate,
 	NewPlayer,
+	EndOfGame,
+	Reset,
 	PacketTypes
 };
 sf::IpAddress ip;
@@ -49,6 +51,7 @@ sf::TcpSocket socket_tcp;
 internal void init_server_connection(sf::Packet* initial_world,
 									 Message* initial_player,
 									 sf::Packet* other_players,
+									 bool initial = true,
 									 sf::IpAddress new_ip = SERVER_IP,
 									 unsigned short new_server_udp_port = SERVER_PORT_UDP
 									)
@@ -56,10 +59,17 @@ internal void init_server_connection(sf::Packet* initial_world,
 	server_udp_port = SERVER_PORT_UDP;
 	ip = new_ip;
 
-	sf::Socket::Status status = socket_tcp.connect(ip, SERVER_PORT_TCP);
-	if (status != sf::Socket::Done)
+	if (initial)
 	{
-		OutputDebugString("wrong");
+		sf::Socket::Status status = socket_tcp.connect(ip, SERVER_PORT_TCP);
+		if (status != sf::Socket::Done)
+		{
+			OutputDebugString("wrong");
+		}
+	}
+	else
+	{
+		socket_tcp.setBlocking(true);
 	}
 
 	// Recieve initial World Status via TCP
@@ -74,52 +84,54 @@ internal void init_server_connection(sf::Packet* initial_world,
 		OutputDebugString("These error messages go nowhere but anyway world update failed.\n");
 	}
 
-
-
-	// Recieve intial player position via TCP
-	sf::Packet player_init;
-	sf::Socket::Status initial_player_status = socket_tcp.receive(player_init);
-	if (initial_player_status == sf::Socket::Partial)
+	if (initial)
 	{
-		//while ()
-		OutputDebugString("wrong\n");
-	}
-	else if (initial_player_status != sf::Socket::Done)
-	{
-		OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
-	}
-
-	int temp_tag;
-	player_init >> temp_tag;
-	if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->color)
-	{
-		OutputDebugString("Parsed initial player information.\n");
-	}
-
-	u_int index;
-	player_init >> index;
-	initial_player->index = index;
-	udp_port = server_udp_port + 1 + index;
-
-	// bind the socket to a port
-	if (socket_udp.bind(udp_port) != sf::Socket::Done)
-	{
-		printf("UDP bind failed\n");
-		return;
-	}
-
-	// After first player requires more 
-	if (initial_player->index != 0)
-	{
-		sf::Socket::Status other_players_status = socket_tcp.receive(*other_players);
-		if (other_players_status != sf::Socket::Done) 
+		// Recieve intial player position via TCP
+		sf::Packet player_init;
+		sf::Socket::Status initial_player_status = socket_tcp.receive(player_init);
+		if (initial_player_status == sf::Socket::Partial)
 		{
+			//while ()
+			OutputDebugString("wrong\n");
+		}
+		else if (initial_player_status != sf::Socket::Done)
+		{
+			OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
+		}
+
+		int temp_tag;
+		player_init >> temp_tag;
+		if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->color)
+		{
+			OutputDebugString("Parsed initial player information.\n");
+		}
+
+		u_int index;
+		player_init >> index;
+		initial_player->index = index;
+		udp_port = server_udp_port + 1 + index;
+
+		// bind the socket to a port
+		if (socket_udp.bind(udp_port) != sf::Socket::Done)
+		{
+			printf("UDP bind failed\n");
 			return;
 		}
+
+		// After first player requires more 
+		if (initial_player->index != 0)
+		{
+			sf::Socket::Status other_players_status = socket_tcp.receive(*other_players);
+			if (other_players_status != sf::Socket::Done)
+			{
+				return;
+			}
+		}
+
+		socket_udp.setBlocking(false);
 	}
 
 	socket_tcp.setBlocking(false);
-	socket_udp.setBlocking(false);
 	return;
 }
 
@@ -195,3 +207,4 @@ internal void server_send_score_update()
 	}
 	return;
 }
+

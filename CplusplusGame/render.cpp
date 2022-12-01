@@ -165,6 +165,73 @@ draw_number(int num, float x, float y, float size, u_int color)
 	}
 }
 
+internal void
+draw_go(u_int color, float size = 0.08f) 
+{
+	float centerX = 0.f;
+	float centerY = 0.f;
+	float half_size = size * 0.5f;
+
+	// G
+	draw_rect(centerX - size * 3.0f, centerY, half_size, 2.5f * size, color);
+	draw_rect(centerX - size * 2.0f, centerY + size * 2.f, size * 1.5f, half_size, color);
+	draw_rect(centerX - size * 2.0f, centerY - size * 2.f, size * 1.5f, half_size, color);
+	draw_rect(centerX - size, centerY - size, half_size, size, color);
+	draw_rect(centerX - half_size * 3.0f, centerY - half_size, half_size, half_size, color);
+	// O
+
+	draw_rect(centerX + size, centerY, half_size, 2.5 * size, color);
+	draw_rect(centerX + size * 3.0f, centerY, half_size, 2.5 * size, color);
+	draw_rect(centerX + size * 2.0f, centerY + size * 2.f, half_size, half_size, color);
+	draw_rect(centerX + size * 2.0f, centerY - size * 2.f, half_size, half_size, color);
+}
+
+internal void
+draw_result(u_int result, u_int color)
+{
+	float centerX = 0.f;
+	float centerY = 0.f;
+	float lowY = -0.09f;
+	float size = 0.06f;
+	float half_size = 0.03f;
+
+	switch (result)
+	{
+		case 0:
+			// Lost
+
+			// L
+			draw_rect(centerX - size, centerY, half_size, 2.5 * size, color);
+			draw_rect(centerX, centerY - size * 2.f, size, half_size, color);
+
+			break;
+		case 1:
+			// Won
+
+			// W
+			draw_rect(centerX - size * 3.0f, centerY, half_size, 2.0 * size, color);
+			draw_rect(centerX - size * 2.0f, centerY - size * 2.f, half_size * 3.0f, half_size, color);
+
+			draw_rect(centerX - size, centerY - size, half_size, size, color);
+			draw_rect(centerX, centerY, half_size * 3.0f, half_size, color);
+			draw_rect(centerX + size, centerY - size, half_size, size, color);
+
+
+			draw_rect(centerX + size * 2.0f, centerY - size * 2.f, half_size * 3.0f, half_size, color);
+			draw_rect(centerX + size * 3.0f, centerY, half_size, 2.0 * size, color);
+
+			break;
+		case 2:
+			// Tied
+
+			// T
+			draw_rect(centerX, centerY, half_size, 2.5 * size, color);
+			draw_rect(centerX, centerY + size * 2.f, 2.5 * size, half_size, color);
+
+			break;
+	}
+}
+
 internal void 
 clear_screen(u_int color)
 {
