@@ -1,0 +1,42 @@
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(534,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (CplusplusGame.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  platform.cpp
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(37,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(41,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(53,53): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(53,44): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(53,35): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(53,26): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(69,61): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(69,47): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(69,42): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(69,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(70,66): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(70,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(70,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(70,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(74,61): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(74,47): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(74,42): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(74,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(76,66): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(76,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(76,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(76,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(85,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(90,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(91,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(96,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(152,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(153,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(158,48): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(183,52): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(184,59): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(204,54): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(212,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(221,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(228,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(229,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(145,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(548,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\genetic.cpp(83,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\x64\Debug\CplusplusGameBot.exe

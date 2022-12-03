@@ -28,8 +28,8 @@ struct PlacedBlock
 enum GAMEMODE
 {
 	Waiting,
-	Playing,
 	Placing,
+	Playing,
 	Gamemode_Count
 };
 

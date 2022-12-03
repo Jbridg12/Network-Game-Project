@@ -153,7 +153,8 @@ void run_server(Player* player)
 			conn->client = client;
 			conn->client_UDP = SERVER_PORT_UDP + 1 + clients.size();
 			conn->score = 0;
-			conn->gamemode = (clients.size() == 0) ? 1 : 0;
+			//conn->gamemode = (clients.size() == 0) ? 1 : 0;
+			conn->gamemode = 0;
 			conn->player = { (float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, colors[clients.size()], (u_int) clients.size() };
 			setup_client(conn);
 
@@ -353,6 +354,9 @@ void run_server(Player* player)
 			timer = 0;
 			end_of_game = false;
 
+			(*clients.begin())->gamemode = 1;
+			next_turn(*clients.begin());
+
 		}
 	}
 
@@ -363,15 +367,17 @@ u_int setup_client(Connection* conn, bool initial)
 {
 	sf::Packet initial_world;
 
-	if (!(conn->player.index))
+	/*if (!(conn->player.index))
 	{
 		initial_world << 1; // Initial Gamemode playing for p1
 	}
 	else
 	{
 		initial_world << 0; // Initial Gamemode waiting for p2-4
-	}
+	}*/
 
+
+	initial_world << 0;
 	initial_world << (int) all_game_blocks.size(); // Number of blocks to expect
 	for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
 	{
@@ -662,6 +668,16 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 				u_int vk_code = (u_int)message.wParam;
 				bool is_down = ((message.lParam & (1 << 31)) == 0);
 
+				if (vk_code == VK_SPACE)
+				{
+					// START THE GAME
+					if (clients.size() >= 2)
+					{
+						std::list<Connection*>::iterator it = clients.begin();
+						(*it)->gamemode = 1;
+						next_turn(*it);
+					}
+				}
 
 			} break;
 			default: {

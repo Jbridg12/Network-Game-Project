@@ -1,0 +1,9 @@
+﻿  platform.cpp
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(9,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(13,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(31,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(32,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(33,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(34,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\platform.cpp(50,5): warning C4007: 'WinMain': must be '__stdcall'
+  CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\Debug\CplusplusGame.exe
