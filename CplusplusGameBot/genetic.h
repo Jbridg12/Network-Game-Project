@@ -1,8 +1,9 @@
 #pragma once
 #define STARTING_INPUT_NUMBER 100
+#define INPUT_TIMER 10
 #define NUMBER_OF_ROUNDS 3
 #define PLAYING_INPUTS 5
-#define PLACING_INPUTS 5
+#define PLACING_INPUTS 13
 
 struct Chromosome
 {

@@ -16,22 +16,6 @@ struct Message
 	u_int color;
 	u_int index;
 };
-struct WorldUpdate
-{
-	float start_x;
-	float start_y;
-	float start_half_width;
-	float start_half_height;
-	bool start_finish_block = false;
-
-	float finish_x;
-	float finish_y;
-	float finish_half_width;
-	float finish_half_height;
-	bool finish_block = true;
-
-	u_int current_gamemode;
-};
 enum PacketType
 {
 	NextTurn,
@@ -40,6 +24,7 @@ enum PacketType
 	NewPlayer,
 	EndOfGame,
 	Reset,
+	Disconnect,
 	PacketTypes
 };
 sf::IpAddress ip;
@@ -99,7 +84,7 @@ internal void init_server_connection(sf::Packet* initial_world,
 			OutputDebugString("These error messages go nowhere but anyway player start failed.\n");
 		}
 
-		int temp_tag;
+		u_int temp_tag;
 		player_init >> temp_tag;
 		if (player_init >> initial_player->newX >> initial_player->newY >> initial_player->frame_ID >> initial_player->color)
 		{
@@ -112,21 +97,20 @@ internal void init_server_connection(sf::Packet* initial_world,
 		udp_port = server_udp_port + 1 + index;
 
 		// bind the socket to a port
-		if (socket_udp.bind(udp_port) != sf::Socket::Done)
+		sf::Socket::Status udp_bind_status = socket_udp.bind(udp_port);
+		if (udp_bind_status != sf::Socket::Done)
 		{
 			printf("UDP bind failed\n");
 			return;
 		}
 
 		// After first player requires more 
-		if (initial_player->index != 0)
+		sf::Socket::Status other_players_status = socket_tcp.receive(*other_players);
+		if (other_players_status != sf::Socket::Done)
 		{
-			sf::Socket::Status other_players_status = socket_tcp.receive(*other_players);
-			if (other_players_status != sf::Socket::Done)
-			{
 				return;
-			}
 		}
+		
 
 		socket_udp.setBlocking(false);
 	}

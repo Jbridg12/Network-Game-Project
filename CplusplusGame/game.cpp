@@ -2,10 +2,18 @@
 #define pressed(b) (input->buttons[b].is_down && input->buttons[b].changed)
 #define released(b) (!input->buttons[b].is_down && input->buttons[b].changed)
 
-internal void run_game(Input* input, float dt, char* score_buffer);
-internal u_int run_collision(BetterRectangle adjusted_player_pos);
-internal void server_pass();
 
+internal void run_game(Input* input, float dt);
+internal u_int run_collision(BetterRectangle adjusted_player_pos);
+internal void server_pass(float dt);
+internal void predict_players(float dt);
+
+struct Frame
+{
+	float x;
+	float y;
+	u_int id;
+};
 struct Player
 {
 	// Physics Variables
@@ -31,6 +39,8 @@ struct Player
 	u_int index;
 	u_int score;
 	u_int frame;
+	
+	Frame past[3];
 };
 struct PlacedBlock
 {
@@ -119,7 +129,9 @@ internal void init_game(bool initial = true)
 		//--------------------------------------------------------------------------
 
 		// Read other players status from server
-		if (player.index != 0)
+		bool empty_list;
+		other_players >> empty_list;
+		if (empty_list)
 		{
 			u_int player_count;
 			if (other_players >> player_count)
@@ -127,14 +139,14 @@ internal void init_game(bool initial = true)
 				for (int i = 0; i < player_count; i++)
 				{
 					Player* new_player = new Player;
-					other_players >> new_player->player_spawn_x;
-					other_players >> new_player->player_spawn_y;
+					other_players >> new_player->player_pos_x;
+					other_players >> new_player->player_pos_y;
 					other_players >> new_player->frame;
 					other_players >> new_player->color;
 					other_players >> new_player->index;
 
-					new_player->player_pos_x = new_player->player_spawn_x;
-					new_player->player_pos_y = new_player->player_spawn_y;
+					new_player->player_spawn_x = (float)(-1.6f + (new_player->index * 0.2));
+					new_player->player_spawn_y = -0.5f;
 					new_player->player_half_width = 0.04f;
 					new_player->player_half_height = 0.04f;
 					new_player->x_speed = 0.f;
@@ -146,12 +158,17 @@ internal void init_game(bool initial = true)
 					new_player->player_old_y = new_player->player_pos_y;
 
 					new_player->score = 0;
+					new_player->past[0] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
+					new_player->past[1] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
+					new_player->past[2] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
 
+					//players.insert(std::next(players.begin(), new_player->index), new_player);
 					players.push_back(new_player);
 				}
 			}
 		}
-		players.push_back(&player);
+		players.insert(std::next(players.begin(), player.index), &player);
+		//players.push_back(&player);
 	}
 	else
 	{
@@ -341,16 +358,16 @@ internal void run_game(Input* input, float dt)
 			break;
 	}
 
-	server_pass();
+	server_pass(dt);
 	frame_count++;
 }
 
-internal void server_pass()
+internal void server_pass(float dt)
 {
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
 		sf::Packet send_pos_update;
-		send_pos_update << player.index << player.player_pos_x << player.player_pos_y;
+		send_pos_update << player.index << player.player_pos_x << player.player_pos_y << frame_count;
 		update_server_position(send_pos_update);
 	}
 
@@ -361,6 +378,7 @@ internal void server_pass()
 		int header;
 		if (update >> header)
 		{
+			u_int dis_index;
 			PlacedBlock new_block;
 			Player* new_player = new Player;
 			std::list<Player*>::iterator it = players.begin();
@@ -403,7 +421,7 @@ internal void server_pass()
 
 					new_player->score = 0;
 
-					players.push_back(new_player);
+					players.insert(std::next(it, new_player->index), new_player);
 					break;
 				case (PacketType::EndOfGame):
 					if (update >> result)
@@ -414,6 +432,12 @@ internal void server_pass()
 					break;
 				case (PacketType::Reset):
 					init_game(false);
+					break;
+				case (PacketType::Disconnect):
+					if (update >> dis_index)
+					{
+						players.erase(std::next(it, dis_index));
+					}
 					break;
 				default:
 					break;
@@ -431,19 +455,71 @@ internal void server_pass()
 		float newX;
 		float newY;
 		u_int index;
-		if (pos_update >> index >> newX >> newY)
+		u_int frame;
+		if (pos_update >> index >> newX >> newY >> frame)
 		{
 			std::list<Player*>::iterator it = players.begin();
-			for (int i = 0; i < index; i++)
+			while ((*it)->index != index)
 			{
 				it++;
 			}
 
-			(*it)->player_pos_x = newX;
-			(*it)->player_pos_y = newY;
+			// Check if update is in chronologic order
+			if (frame > (*it)->frame)
+			{
+				(*it)->frame = frame;
+				(*it)->player_pos_x = newX;
+				(*it)->player_pos_y = newY;
+
+				(*it)->past[0] = (*it)->past[1];
+				(*it)->past[1] = (*it)->past[2];
+				(*it)->past[2] = Frame{newX, newY, frame};
+			}
+		}
+	}
+	else	// If we don't get a position update from the server then we predict player movement from past behavior 
+	{
+		predict_players(dt);
+	}
+
+}
+
+
+// CUT or fix cause my god is it not helpful
+
+internal void predict_players(float dt)
+{
+	for (std::list<Player*>::iterator it = players.begin(); it != players.end(); it++)
+	{
+		if ((*it)->index == player.index)
+		{
+			continue;
+		}
+		if ((*it)->player_pos_x == (*it)->player_spawn_x && (*it)->player_pos_y == (*it)->player_spawn_y)
+		{
+			// DO NOT PREDICT
+			// Currently not in a motion based gamemode
+			continue;
+		}
+		else
+		{
+			// predict position of player from past two frames
+			float v1_x = (float) ((*it)->past[1].x - (*it)->past[0].x) / (std::abs((float)(*it)->past[1].id - (*it)->past[0].id) * dt);
+			float v2_x = (float) ((*it)->past[2].x - (*it)->past[1].x) / (std::abs((float)(*it)->past[2].id - (*it)->past[1].id) * dt);
+			float v1_y = (float) ((*it)->past[1].y - (*it)->past[0].y) / (std::abs((float)(*it)->past[1].id - (*it)->past[0].id) * dt);
+			float v2_y = (float) ((*it)->past[2].y - (*it)->past[1].y) / (std::abs((float)(*it)->past[2].id - (*it)->past[1].id) * dt);
+
+			float a_x = (float) (v2_x - v1_x) / (std::abs((float) (*it)->past[2].id - (*it)->past[1].id) * dt);
+			float a_y = (float) (v2_y - v1_y) / (std::abs((float) (*it)->past[2].id - (*it)->past[1].id) * dt);
+
+			float t = std::abs((float) frame_count - (*it)->past[2].id) * dt;
+
+			(*it)->player_pos_x += v2_x * t + (0.5 * a_x * t * t);
+			(*it)->player_pos_y += v2_y * t + (0.5 * a_y * t * t);
 		}
 	}
 
+	return;
 }
 
 internal u_int run_collision(BetterRectangle adjusted_player_pos)

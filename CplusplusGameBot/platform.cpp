@@ -3,6 +3,8 @@
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
 #include <SFML\Graphics.hpp>
+#include <stdlib.h> 
+#include <cmath>
 #include <list>
 #include "platform.h"
 #include "utils.cpp"
@@ -184,11 +186,13 @@ void WindowLoop(HDC hdc, HWND window)
 
 int GeneticApplication(const Chromosome &x1)
 {
-	int gene_score = 0;
+	float gene_score = 0;
+
 	init_game(x1);
 	WindowLoop(hdc, window);
 
-	gene_score = player.score;
+	gene_score -= (int) distance_to_goal;
+	gene_score -= player.score;
 
 	return gene_score;
 }

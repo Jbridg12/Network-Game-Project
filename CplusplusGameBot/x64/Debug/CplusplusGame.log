@@ -36,7 +36,8 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(212
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(221,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(228,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(229,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(145,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(548,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\genetic.cpp(83,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(149,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(567,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\genetic.cpp(91,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\platform.cpp(197,9): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\x64\Debug\CplusplusGameBot.exe

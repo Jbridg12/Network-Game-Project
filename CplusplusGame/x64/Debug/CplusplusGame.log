@@ -35,6 +35,7 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(212,61
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(221,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(228,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(229,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(127,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(437,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(139,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(517,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(518,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\x64\Debug\CplusplusGame.exe

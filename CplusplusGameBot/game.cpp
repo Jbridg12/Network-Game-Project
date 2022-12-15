@@ -1,7 +1,6 @@
 #define is_down(b) input->buttons[b].is_down
 #define pressed(b) (input->buttons[b].is_down && input->buttons[b].changed)
 #define released(b) (!input->buttons[b].is_down && input->buttons[b].changed)
-#define INPUT_TIMER 20
 
 internal bool run_game(Input_State* input, float dt);
 internal u_int run_collision(BetterRectangle adjusted_player_pos);
@@ -58,6 +57,10 @@ u_int frame_count;
 u_int result;
 
 Player player;
+
+PlacedBlock finish;
+float distance_to_goal;
+
 GAMEMODE current_gamemode;
 list<PlacedBlock> all_game_blocks;
 list<Player*> players;
@@ -106,6 +109,7 @@ internal void init_game(const Chromosome& x)
 	{
 		PlacedBlock new_block;
 		initial_world >> new_block.x >> new_block.y >> new_block.half_width >> new_block.half_height >> new_block.finish_block;
+		if (new_block.finish_block)	finish = new_block;
 		all_game_blocks.push_back(new_block);
 	}
 
@@ -254,10 +258,10 @@ internal bool run_game(Input_State* input, float dt)
 					switch (*ip)
 					{
 					case 1:	// BUTTON_A
-						player.x_acceleration -= 30;
+						player.x_acceleration -= 80;
 						break;
 					case 2:	// BUTTON_D
-						player.x_acceleration += 30;
+						player.x_acceleration += 80;
 						break;
 					case 0:	// BUTTON_SPACE
 						if (grounded)
@@ -266,10 +270,10 @@ internal bool run_game(Input_State* input, float dt)
 					case 6:	// BUTTON_A+SPACE
 						if (grounded)
 							player.y_acceleration += 700;
-						player.x_acceleration += 30;
+						player.x_acceleration += 80;
 						break;
 					case 7:	// BUTTON_D+SPACE
-						player.x_acceleration += 30;
+						player.x_acceleration += 80;
 						if (grounded)
 							player.y_acceleration += 700;
 						break;
@@ -280,6 +284,12 @@ internal bool run_game(Input_State* input, float dt)
 				else
 				{
 					if (collision_result == 1) server_send_score_update();
+
+					// store distance to goal for scoring
+					float x_squared = abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x);
+					float y_squared = abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y);
+					distance_to_goal = sqrt(x_squared + y_squared);
+
 					player.player_pos_x = player.player_spawn_x;
 					player.player_pos_y = player.player_spawn_y;
 					player.x_speed = 0.f;
@@ -326,6 +336,12 @@ internal bool run_game(Input_State* input, float dt)
 			if (collision_result > 0)
 			{
 				if (collision_result == 1) server_send_score_update();
+				
+				// store distance to goal for scoring
+				float x_squared = abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x);
+				float y_squared = abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y);
+				distance_to_goal = sqrt(x_squared + y_squared);
+				
 				player.player_pos_x = player.player_spawn_x;
 				player.player_pos_y = player.player_spawn_y;
 				player.x_speed = 0.f;
@@ -419,8 +435,11 @@ internal bool run_game(Input_State* input, float dt)
 				else
 				{
 					server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
-					curr_placing_inputs = placing_inputs.front();
-					placing_inputs.pop_front();
+					if (placing_inputs.size())
+					{
+						curr_placing_inputs = placing_inputs.front();
+						placing_inputs.pop_front();
+					}
 					server_send_next_turn(player.index);
 				}
 			}

@@ -34,8 +34,16 @@ internal void init_possible_inputs()
 	poss_placing_inputs[0] = 3;
 	poss_placing_inputs[1] = 1;
 	poss_placing_inputs[2] = 4;
-	poss_placing_inputs[3] = 2;
-	poss_placing_inputs[4] = 5;
+	poss_placing_inputs[3] = 2; 
+	poss_placing_inputs[4] = 3;
+	poss_placing_inputs[5] = 1;
+	poss_placing_inputs[6] = 4;
+	poss_placing_inputs[7] = 2;
+	poss_placing_inputs[8] = 3;
+	poss_placing_inputs[9] = 1;
+	poss_placing_inputs[10] = 4;
+	poss_placing_inputs[11] = 2;
+	poss_placing_inputs[12] = 5;
 
 }
 // ----------------------------------------------------------------------------------------------------------
@@ -78,7 +86,7 @@ internal bool calculate_cost(const Chromosome& individual, Cost &cost)
 	// RUN THE GAME 
 	// Need to implement a way to call the game with all of the inputs in the bot
 
-	int score = 0;
+	float score = 0;
 
 	cost.score = GeneticApplication(individual);
 
@@ -213,7 +221,7 @@ internal int run_ga()
 
 	Genetic_Algorithm ga_obj;
 	ga_obj.problem_mode = EA::GA_MODE::SOGA;	// State the Genetic Algorithm is aiming for a single objective.
-	ga_obj.population = 200;
+	ga_obj.population = 20;
 	ga_obj.generation_max = 1000;				// We want this to keep attempting for a long time.
 	ga_obj.init_genes = shakespeare_init_genes;
 	ga_obj.calculate_SO_total_fitness = calculate_total_fitness;

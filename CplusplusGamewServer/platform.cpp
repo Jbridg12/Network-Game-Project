@@ -2,9 +2,10 @@
 
 #include <Windows.h>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <list>
-//#include <Winsock2.h>
+#include <algorithm>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
 #include <SFML\Window.hpp>
@@ -19,9 +20,7 @@ sf::Font font;
 /*
 	TODO: 
 	- Implement cleanup for structures and connections
-	- Add death by colliding with bottom of screen
-	- Add text to indicate the turn changes
-	- Also add text to show the beginning of the game
+	- LINE 436 
 */
 
 
@@ -37,7 +36,7 @@ struct Player
 {
 	float player_pos_x;
 	float player_pos_y;
-	int frame_num;
+	u_int frame_num;
 	u_int color;
 	u_int index;
 };
@@ -63,7 +62,6 @@ struct Connection
 	Player player;
 	u_int score;
 };
-
 enum PacketType
 {
 	NextTurn,
@@ -72,16 +70,19 @@ enum PacketType
 	NewPlayer,
 	EndOfGame,
 	Reset,
+	Disconnect,
 	PacketTypes
 };
+
 u_int setup_client(Connection* conn, bool initial = true);
 u_int world_update(sf::TcpSocket* client, sf::Packet current_update);
 u_int next_turn(Connection* conn);
 void end_game(Connection* conn, u_int result);
 void reset(Connection* conn);
-void update_player_position(u_int index, float newX, float newY);
+void update_player_position(u_int index, u_int frame, float newX, float newY);
 void send_new_block(u_int index, float x, float y, float half_width, float half_height);
 void send_score_update();
+void send_disconnect(u_int index);
 
 Player player;
 
@@ -95,6 +96,7 @@ bool end_of_game;
 sf::UdpSocket socket_udp;
 sf::TcpListener listener;
 std::list<Connection*> clients;
+std::list<u_int> available_index = {0, 1, 2, 3};
 
 u_short server_udp_port = SERVER_PORT_UDP;
 u_int colors[4] = {0xf6c345, 0xde193e, 0x25b4ff, 0x8a2be2};
@@ -150,36 +152,56 @@ void run_server(Player* player)
 		if (clients.size() < 4)
 		{
 			Connection* conn = new Connection;
+			u_int index = available_index.front();
+			available_index.pop_front();
 			conn->client = client;
-			conn->client_UDP = SERVER_PORT_UDP + 1 + clients.size();
+			conn->client_UDP = SERVER_PORT_UDP + 1 + index;
 			conn->score = 0;
-			//conn->gamemode = (clients.size() == 0) ? 1 : 0;
 			conn->gamemode = 0;
-			conn->player = { (float)(-1.6f + (clients.size() * 0.2)), -0.5f, 0, colors[clients.size()], (u_int) clients.size() };
+			conn->player = { (float)(-1.6f + (index * 0.2)), -0.5f, 0, colors[index], index };
 			setup_client(conn);
 
-			clients.push_back(conn);
+			clients.insert(std::next(clients.begin(), index), conn);
 		}
 		
 	}
-	
-	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+
+	std::list<Connection*>::iterator it = clients.begin();
+	while (it != clients.end())
 	{
 		sf::Packet packet;
 		sf::Socket::Status recv =  (*it)->client->receive(packet);
 		if (recv == sf::Socket::Error)
 		{
  			OutputDebugString("Unexpected error\n");
-			//WSAGetLastError();
 		}
 		else if (recv == sf::Socket::Disconnected)
 		{
 			OutputDebugString("Socket Disconnection\n");
-			//it = clients.erase(it);
+			available_index.push_back((*it)->player.index);
+			available_index.sort();
+			if ((*it)->gamemode != 0)
+			{
+				if ((*it) == clients.back())
+				{
+					clients.front()->gamemode = 3 - (*it)->gamemode;;
+					next_turn(clients.front());
+				}
+				else
+				{
+					std::list<Connection*>::iterator next = std::next(it);
+					(*next)->gamemode = (*it)->gamemode;
+					next_turn(*next);
+				}
+			}
+			send_disconnect((*it)->player.index);
+			it = clients.erase(it);
+
 		}
 		else if (recv == sf::Socket::NotReady)
 		{
 			OutputDebugString("Socket out of data\n");
+			it++;
 		}
 		else if (recv == sf::Socket::Done)
 		{
@@ -198,8 +220,13 @@ void run_server(Player* player)
 							if (clients.size() > 1)
 							{
 								u_int next_index = index + 1;
+								while (std::find(available_index.begin(), available_index.end(), next_index) != available_index.end())
+								{
+									next_index++;
+								}
+
 								u_int next_gamemode = (*it)->gamemode;
-								if (next_index == clients.size())
+								if (next_index > clients.back()->player.index)
 								{
 									if ((*it)->gamemode == 2)
 									{
@@ -237,13 +264,13 @@ void run_server(Player* player)
 
 									}
 									
-									next_index = 0;
+									next_index = (*clients.begin())->player.index;
 									next_gamemode = 3 - (*it)->gamemode;
 									
 								}
 
 								std::list<Connection*>::iterator it2 = clients.begin();
-								for (int i = 0; i < next_index; i++)
+								while ((*it2)->player.index != next_index)
 								{
 									it2++;
 								}
@@ -283,15 +310,14 @@ void run_server(Player* player)
 				}
 			}
 			
-			
-			
+			it++;
 		}
 	}
 
 	// UDP Stuff
-	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+	for (std::list<Connection*>::iterator uit = clients.begin(); uit != clients.end(); uit++)
 	{
-		unsigned short clientPort = (*it)->client_UDP;
+		unsigned short clientPort = (*uit)->client_UDP;
 		sf::Packet packet;
 		sf::IpAddress sender = SERVER_IP;
 		sf::Socket::Status recv_udp = socket_udp.receive(packet, sender, clientPort);
@@ -315,17 +341,23 @@ void run_server(Player* player)
 			float newX;
 			float newY;
 			u_int index;
-			if (packet >> index >> newX >> newY)
+			u_int frame;
+			if (packet >> index >> newX >> newY >> frame)
 			{
-				std::list<Connection*>::iterator it = clients.begin();
-				for (int i = 0; i < index; i++)
+				std::list<Connection*>::iterator it2 = clients.begin();
+				while ((*it2)->player.index != index)
 				{
-					it++;
+					it2++;
 				}
 
-				(*it)->player.player_pos_x = newX;
-				(*it)->player.player_pos_y = newY;
-				update_player_position(index, newX, newY);
+				if (frame > (*it2)->player.frame_num)
+				{
+					(*it2)->player.frame_num = frame;
+					(*it2)->player.player_pos_x = newX;
+					(*it2)->player.player_pos_y = newY;
+
+					update_player_position(index, frame, newX, newY);
+				}
 			}
 
 
@@ -338,14 +370,15 @@ void run_server(Player* player)
 		if (timer++ >= RESET_TIMER)
 		{
 			init_game();
-			for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+			for (std::list<Connection*>::iterator it2 = clients.begin(); it2 != clients.end(); it2++)
 			{
-				reset(*it);
-				(*it)->player.player_pos_x = (float)(-1.6f + ((*it)->player.index * 0.2));
-				(*it)->player.player_pos_y = -0.5f;
-				(*it)->score = 0;
-				(*it)->gamemode = ((*it)->player.index == 0) ? 1 : 0;
-				setup_client((*it), false);
+				reset(*it2);
+				(*it2)->player.player_pos_x = (float)(-1.6f + ((*it2)->player.index * 0.2));
+				(*it2)->player.player_pos_y = -0.5f;
+				(*it2)->player.frame_num = 0;
+				(*it2)->score = 0;
+				(*it2)->gamemode = (it2 == clients.begin()) ? 1 : 0;
+				setup_client((*it2), false);
 			}
 
 			current_round = 0;
@@ -366,17 +399,6 @@ void run_server(Player* player)
 u_int setup_client(Connection* conn, bool initial)
 {
 	sf::Packet initial_world;
-
-	/*if (!(conn->player.index))
-	{
-		initial_world << 1; // Initial Gamemode playing for p1
-	}
-	else
-	{
-		initial_world << 0; // Initial Gamemode waiting for p2-4
-	}*/
-
-
 	initial_world << 0;
 	initial_world << (int) all_game_blocks.size(); // Number of blocks to expect
 	for (std::list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
@@ -405,10 +427,10 @@ u_int setup_client(Connection* conn, bool initial)
 		sf::Socket::Status send_status = conn->client->send(player_start);
 		if (send_status == sf::Socket::Partial)
 		{
-			while (conn->client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
-			{
+			//while (conn->client->send(&player_start, sizeof(Message)) == sf::Socket::Partial)
+			//{
 				//OutputDebugString("Only Parts\n");
-			}
+			//}
 			OutputDebugString("Only Parts\n");
 		}
 		if (send_status != sf::Socket::Done)
@@ -417,18 +439,22 @@ u_int setup_client(Connection* conn, bool initial)
 			return 0;
 		}
 
+
+		// Send other players to initial player as well check if it exists in the game code, have a flag to indicate whether to expect them or not
+		sf::Packet all_players;
+
 		// Update all other clients to recognize have new player in game
-		if (!clients.empty())
+		if (clients.size())
 		{
-			sf::Packet all_players;
-			all_players << (int)clients.size();
+			all_players << true;
+			all_players << (u_int)clients.size();
 			for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 			{
 				sf::Socket::Status send_status = (*it)->client->send(player_start);
 				all_players << (*it)->player.player_pos_x << (*it)->player.player_pos_y << (*it)->player.frame_num << (*it)->player.color << (*it)->player.index;
 			}
 
-
+			
 			sf::Socket::Status send_status2 = conn->client->send(all_players);
 			if (send_status != sf::Socket::Done)
 			{
@@ -437,9 +463,19 @@ u_int setup_client(Connection* conn, bool initial)
 			}
 
 		}
+		else
+		{
+			all_players << false;
+			sf::Socket::Status send_status2 = conn->client->send(all_players);
+			if (send_status != sf::Socket::Done)
+			{
+				//OutputDebugString("These error messages go nowhere but anyway world update failed.");
+				return -1;
+			}
+		}
 
-		conn->client->setBlocking(false);
-	}
+			conn->client->setBlocking(false);
+		}
 		
 
 	return 1;
@@ -516,10 +552,10 @@ void reset(Connection* conn)
 	}
 }
 
-void update_player_position(u_int index, float newX, float newY)
+void update_player_position(u_int index, u_int frame, float newX, float newY)
 {
 	sf::Packet update;
-	update << index << newX << newY;
+	update << index << newX << newY << frame;
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
 		if ((*it)->player.index == index) continue;
@@ -556,6 +592,21 @@ void send_score_update()
 	}
 	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
+		if ((*it)->client->send(update) != sf::Socket::Done)
+		{
+			printf("Send Error\n");
+			return;
+		}
+	}
+}
+
+void send_disconnect(u_int index)
+{
+	sf::Packet update;
+	update << PacketType::Disconnect << index;
+	for (std::list<Connection*>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if ((*it)->player.index == index) continue;
 		if ((*it)->client->send(update) != sf::Socket::Done)
 		{
 			printf("Send Error\n");

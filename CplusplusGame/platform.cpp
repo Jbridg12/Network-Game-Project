@@ -3,7 +3,11 @@
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
 #include <SFML\Graphics.hpp>
+#include <iterator>
+#include <string>
 #include <list>
+#include <cmath> 
+#include <algorithm>
 #include "platform.h"
 #include "utils.cpp"
 
