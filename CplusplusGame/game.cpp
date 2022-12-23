@@ -2,12 +2,6 @@
 #define pressed(b) (input->buttons[b].is_down && input->buttons[b].changed)
 #define released(b) (!input->buttons[b].is_down && input->buttons[b].changed)
 
-
-internal void run_game(Input* input, float dt);
-internal u_int run_collision(BetterRectangle adjusted_player_pos);
-internal void server_pass(float dt);
-internal void predict_players(float dt);
-
 struct Frame
 {
 	float x;
@@ -39,7 +33,9 @@ struct Player
 	u_int index;
 	u_int score;
 	u_int frame;
-	
+
+
+	bool interpolate_prediction;
 	Frame past[3];
 };
 struct PlacedBlock
@@ -59,6 +55,13 @@ enum GAMEMODE
 	Playing,
 	Gamemode_Count
 };
+
+internal void run_game(Input* input, float dt);
+internal u_int run_collision(Player* target);
+internal void server_pass(float dt);
+internal void predict_players(float dt);
+internal void reset_prediction_frames();
+
 
 bool spawned_next_platform = false;
 bool end_of_game = false;
@@ -158,6 +161,7 @@ internal void init_game(bool initial = true)
 					new_player->player_old_y = new_player->player_pos_y;
 
 					new_player->score = 0;
+					new_player->interpolate_prediction = false;
 					new_player->past[0] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
 					new_player->past[1] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
 					new_player->past[2] = Frame{ new_player->player_pos_x, new_player->player_pos_y, new_player->frame };
@@ -267,15 +271,9 @@ internal void run_game(Input* input, float dt)
 			player.y_acceleration = -15.0f;
 			player.x_acceleration = 0.f;
 
-
-			BetterRectangle adjusted_player_position = adjust_to_screen(player.player_pos_x, 
-																		player.player_pos_y, 
-																		player.player_half_width, 
-																		player.player_half_height);
-
 			
 			// Player Collision Detection	
-			collision_result = run_collision(adjusted_player_position);
+			collision_result = run_collision(&player);
 			if (collision_result > 0)
 			{
 				if (collision_result == 1) server_send_score_update();
@@ -286,6 +284,7 @@ internal void run_game(Input* input, float dt)
 				player.x_acceleration = 0.f;
 				player.y_acceleration = 0.f;
 				spawned_next_platform = false;
+				reset_prediction_frames();
 				server_send_next_turn(player.index);
 			}
 			
@@ -317,6 +316,7 @@ internal void run_game(Input* input, float dt)
 			if (released(BUTTON_Z))
 			{
 				server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
+				reset_prediction_frames();
 				server_send_next_turn(player.index);
 			}
 			
@@ -386,6 +386,7 @@ internal void server_pass(float dt)
 			{
 				case (PacketType::NextTurn):
 					current_gamemode = (GAMEMODE)server_turn_update(update, (u_int)current_gamemode);
+					
 					break;
 				case (PacketType::NewBlock):
 					if(server_new_block_update(update, &(new_block.x), &(new_block.y), &(new_block.half_width), &(new_block.half_height)) != 0)
@@ -467,13 +468,31 @@ internal void server_pass(float dt)
 			// Check if update is in chronologic order
 			if (frame > (*it)->frame)
 			{
-				(*it)->frame = frame;
-				(*it)->player_pos_x = newX;
-				(*it)->player_pos_y = newY;
+				if ((*it)->interpolate_prediction)
+				{
+					(*it)->frame = frame;
+					(*it)->player_pos_x = (newX * 0.5) + ((*it)->player_pos_x * 0.5);
+					(*it)->player_pos_y = (newY * 0.5) + ((*it)->player_pos_y * 0.5);
 
-				(*it)->past[0] = (*it)->past[1];
-				(*it)->past[1] = (*it)->past[2];
-				(*it)->past[2] = Frame{newX, newY, frame};
+					(*it)->past[0] = (*it)->past[1];
+					(*it)->past[1] = (*it)->past[2];
+					(*it)->past[2] = Frame{ newX, newY, frame };
+					(*it)->interpolate_prediction = false;
+				}
+				else
+				{
+					(*it)->frame = frame;
+					(*it)->player_pos_x = newX;
+					(*it)->player_pos_y = newY;
+
+					(*it)->past[0] = (*it)->past[1];
+					(*it)->past[1] = (*it)->past[2];
+					(*it)->past[2] = Frame{ newX, newY, frame };
+				}
+
+				(*it)->player_old_x = (*it)->player_pos_x;
+				(*it)->player_old_y = (*it)->player_pos_y;
+				
 			}
 		}
 	}
@@ -516,16 +535,28 @@ internal void predict_players(float dt)
 
 			(*it)->player_pos_x += v2_x * t + (0.5 * a_x * t * t);
 			(*it)->player_pos_y += v2_y * t + (0.5 * a_y * t * t);
+
+			run_collision((*it));
+			(*it)->player_old_x = (*it)->player_pos_x;
+			(*it)->player_old_y = (*it)->player_pos_y;
+
+			(*it)->interpolate_prediction = true;
+
 		}
 	}
 
 	return;
 }
 
-internal u_int run_collision(BetterRectangle adjusted_player_pos)
+internal u_int run_collision(Player* target)
 {
 
 	// Complex Collsion detection so each step is commented to explain what it does
+
+	BetterRectangle adjusted_player_pos = adjust_to_screen(target->player_pos_x,
+															target->player_pos_y,
+															target->player_half_width,
+															target->player_half_height);
 
 	/*	Section 0
 		Keep player on screen.
@@ -534,31 +565,23 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 		adjusted_player_pos.x1 > buf.b_width
 		)
 	{
-		player.player_pos_x = player.player_old_x;
-		player.x_speed *= 0.f;
-		player.x_acceleration = 0.f;
+		target->player_pos_x = target->player_old_x;
+		target->x_speed *= 0.f;
+		target->x_acceleration = 0.f;
 	}
 
-
-	/* old if block
-		if (adjusted_player_pos.y0 < 0 ||
-		adjusted_player_pos.y0 > buf.b_height ||
-		adjusted_player_pos.y1 < 0 ||
-		adjusted_player_pos.y1 > buf.b_height
-		)
-	*/
 	if (adjusted_player_pos.y0 < 0)
 	{
-		player.player_pos_y = player.player_old_y;
-		player.y_speed *= 0.f;
-		player.y_acceleration = 0.f;
+		target->player_pos_y = target->player_old_y;
+		target->y_speed *= 0.f;
+		target->y_acceleration = 0.f;
 		return 2;
 	}
 	else if (adjusted_player_pos.y1 > buf.b_height)
 	{
-		player.player_pos_y = player.player_old_y;
-		player.y_speed *= 0.f;
-		player.y_acceleration = 0.f;
+		target->player_pos_y = target->player_old_y;
+		target->y_speed *= 0.f;
+		target->y_acceleration = 0.f;
 	}
 
 	for (list<PlacedBlock>::iterator it = all_game_blocks.begin(); it != all_game_blocks.end(); it++)
@@ -577,66 +600,66 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 		 
 
 		// Perform check if right side of player is in object
-		if ((player.player_pos_x + player.player_half_width) <= right_bounds &&
-			(player.player_pos_x + player.player_half_width) >= left_bounds
+		if ((target->player_pos_x + target->player_half_width) <= right_bounds &&
+			(target->player_pos_x + target->player_half_width) >= left_bounds
 			)
 		{
 			// Now check if the player's top is within the object as well
-			if ((player.player_pos_y + player.player_half_height) >= lower_bounds &&
-				(player.player_pos_y + player.player_half_height) <= up_bounds)
+			if ((target->player_pos_y + target->player_half_height) >= lower_bounds &&
+				(target->player_pos_y + target->player_half_height) <= up_bounds)
 			{
 				// Check if the player is colliding with the finish flag
 				if (it->finish_block) return 1;
 
 				// Finally determine if the x direction was the axis that collided
-				if (((player.player_old_y + player.player_half_height) >= lower_bounds &&
-					(player.player_old_y + player.player_half_height) <= up_bounds) ||
-					((player.player_old_y - player.player_half_height) >= lower_bounds &&
-					(player.player_old_y - player.player_half_height) <= up_bounds))
+				if (((target->player_old_y + target->player_half_height) >= lower_bounds &&
+					(target->player_old_y + target->player_half_height) <= up_bounds) ||
+					((target->player_old_y - target->player_half_height) >= lower_bounds &&
+					(target->player_old_y - target->player_half_height) <= up_bounds))
 				{
 					// If so perform x adjustments
-					player.player_pos_x = player.player_old_x;
-					player.x_speed *= 0.f;
-					player.x_acceleration = 0.f;
+					target->player_pos_x = target->player_old_x;
+					target->x_speed *= 0.f;
+					target->x_acceleration = 0.f;
 				}
 				else
 				{
 					// If not then perform y adjustments
-					player.player_pos_y = player.player_old_y;
-					player.y_speed *= 0.f;
-					player.y_acceleration = 0.f;
+					target->player_pos_y = target->player_old_y;
+					target->y_speed *= 0.f;
+					target->y_acceleration = 0.f;
 				}
 
 			}
 			// Check if the player's bottom side is inside the object 
-			if ((player.player_pos_y - player.player_half_height) >= lower_bounds &&
-				(player.player_pos_y - player.player_half_height) <= up_bounds)
+			if ((target->player_pos_y - target->player_half_height) >= lower_bounds &&
+				(target->player_pos_y - target->player_half_height) <= up_bounds)
 			{
 				if (it->finish_block) return 1;
 
 				//Perforom x/y axis collision check
-				if (((player.player_old_y + player.player_half_height) >= lower_bounds &&
-					(player.player_old_y + player.player_half_height) <= up_bounds) ||
-					((player.player_old_y - player.player_half_height) >= lower_bounds &&
-						(player.player_old_y - player.player_half_height) <= up_bounds))
+				if (((target->player_old_y + target->player_half_height) >= lower_bounds &&
+					(target->player_old_y + target->player_half_height) <= up_bounds) ||
+					((target->player_old_y - target->player_half_height) >= lower_bounds &&
+						(target->player_old_y - target->player_half_height) <= up_bounds))
 				{
 					// Adjust X
-					player.player_pos_x = player.player_old_x;
-					player.x_speed *= 0.f;
-					player.x_acceleration = 0.f;
+					target->player_pos_x = target->player_old_x;
+					target->x_speed *= 0.f;
+					target->x_acceleration = 0.f;
 				}
 				else
 				{
 					//Adjust Y
-					player.player_pos_y = player.player_old_y;
-					player.y_speed *= 0.f;
-					player.y_acceleration = 0.f;
+					target->player_pos_y = target->player_old_y;
+					target->y_speed *= 0.f;
+					target->y_acceleration = 0.f;
 				}
 			}
 			
 		}
 
-		/*	Section 1
+		/*	Section 2
 			Check if the left side of the player is inside of any objects on the
 			screen and adjust accordingly.
 
@@ -646,50 +669,50 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 			Follows the exact same structure as section 1, so comments were omitted.
 		*/
 
-		if ((player.player_pos_x - player.player_half_width) <= right_bounds && 
-			(player.player_pos_x - player.player_half_width) >= left_bounds
+		if ((target->player_pos_x - target->player_half_width) <= right_bounds && 
+			(target->player_pos_x - target->player_half_width) >= left_bounds
 			)
 		{
-			if ((player.player_pos_y + player.player_half_height) >= lower_bounds &&
-				(player.player_pos_y + player.player_half_height) <= up_bounds)
+			if ((target->player_pos_y + target->player_half_height) >= lower_bounds &&
+				(target->player_pos_y + target->player_half_height) <= up_bounds)
 			{
 				if (it->finish_block) return 1;
 
-				if (((player.player_old_y + player.player_half_height) >= lower_bounds &&
-					(player.player_old_y + player.player_half_height) <= up_bounds) ||
-					((player.player_old_y - player.player_half_height) >= lower_bounds &&
-						(player.player_old_y - player.player_half_height) <= up_bounds))
+				if (((target->player_old_y + target->player_half_height) >= lower_bounds &&
+					(target->player_old_y + target->player_half_height) <= up_bounds) ||
+					((target->player_old_y - target->player_half_height) >= lower_bounds &&
+						(target->player_old_y - target->player_half_height) <= up_bounds))
 				{
-					player.player_pos_x = player.player_old_x;
-					player.x_speed *= 0.f;
-					player.x_acceleration = 0.f;
+					target->player_pos_x = target->player_old_x;
+					target->x_speed *= 0.f;
+					target->x_acceleration = 0.f;
 				}
 				else
 				{
-					player.player_pos_y = player.player_old_y;
-					player.y_speed *= 0.f;
-					player.y_acceleration = 0.f;
+					target->player_pos_y = target->player_old_y;
+					target->y_speed *= 0.f;
+					target->y_acceleration = 0.f;
 				}
 			}
-			if ((player.player_pos_y - player.player_half_height) >= lower_bounds &&
-				(player.player_pos_y - player.player_half_height) <= up_bounds)
+			if ((target->player_pos_y - target->player_half_height) >= lower_bounds &&
+				(target->player_pos_y - target->player_half_height) <= up_bounds)
 			{
 				if (it->finish_block) return 1;
 
-				if (((player.player_old_y + player.player_half_height) >= lower_bounds &&
-					(player.player_old_y + player.player_half_height) <= up_bounds) ||
-					((player.player_old_y - player.player_half_height) >= lower_bounds &&
-						(player.player_old_y - player.player_half_height) <= up_bounds))
+				if (((target->player_old_y + target->player_half_height) >= lower_bounds &&
+					(target->player_old_y + target->player_half_height) <= up_bounds) ||
+					((target->player_old_y - target->player_half_height) >= lower_bounds &&
+						(target->player_old_y - target->player_half_height) <= up_bounds))
 				{
-					player.player_pos_x = player.player_old_x;
-					player.x_speed *= 0.f;
-					player.x_acceleration = 0.f;
+					target->player_pos_x = target->player_old_x;
+					target->x_speed *= 0.f;
+					target->x_acceleration = 0.f;
 				}
 				else
 				{
-					player.player_pos_y = player.player_old_y;
-					player.y_speed *= 0.f;
-					player.y_acceleration = 0.f;
+					target->player_pos_y = target->player_old_y;
+					target->y_speed *= 0.f;
+					target->y_acceleration = 0.f;
 				}
 			}
 			
@@ -698,4 +721,17 @@ internal u_int run_collision(BetterRectangle adjusted_player_pos)
 	}
 
 	return 0;
+}
+
+internal void reset_prediction_frames()
+{
+	for (std::list<Player*>::iterator it = players.begin(); it != players.end(); it++)
+	{
+		if ((*it)->index != player.index)
+		{
+			(*it)->past[0] = Frame{ (*it)->player_spawn_x, (*it)->player_spawn_y, (*it)->frame };
+			(*it)->past[1] = Frame{ (*it)->player_spawn_x, (*it)->player_spawn_y, (*it)->frame };
+			(*it)->past[2] = Frame{ (*it)->player_spawn_x, (*it)->player_spawn_y, (*it)->frame };
+		}
+	}
 }

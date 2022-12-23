@@ -134,19 +134,8 @@ void run_server(Player* player)
 	sf::TcpSocket* client = new sf::TcpSocket;
 	sf::Socket::Status conn_status = listener.accept(*client);
 
-	if (conn_status == sf::Socket::Error)
-	{
-		OutputDebugString("Connection failed\n");
-	}
-	else if (conn_status == sf::Socket::Disconnected)
-	{
-		OutputDebugString("Socket Disconnection\n");
-	}
-	else if (conn_status == sf::Socket::NotReady)
-	{
-		OutputDebugString("No New Connection\n");
-	}
-	else if (conn_status == sf::Socket::Done)
+
+	if (listener.accept(*client) == sf::Socket::Done)
 	{
 		OutputDebugString("Client Connected\n");
 		if (clients.size() < 4)
@@ -165,6 +154,8 @@ void run_server(Player* player)
 		}
 		
 	}
+		
+
 
 	std::list<Connection*>::iterator it = clients.begin();
 	while (it != clients.end())
@@ -313,7 +304,7 @@ void run_server(Player* player)
 			it++;
 		}
 	}
-
+	
 	// UDP Stuff
 	for (std::list<Connection*>::iterator uit = clients.begin(); uit != clients.end(); uit++)
 	{
