@@ -5,6 +5,7 @@
 #include <iterator>
 #include <string>
 #include <list>
+#include <fstream>
 #include <algorithm>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
@@ -15,14 +16,6 @@
 
 global_variable u_short on = 1;
 global_variable BUFFER_STATE buf;
-sf::Font font;
-
-/*
-	TODO: 
-	- Implement cleanup for structures and connections
-	- LINE 436 
-*/
-
 
 struct Message
 {
@@ -98,7 +91,6 @@ sf::TcpListener listener;
 std::list<Connection*> clients;
 std::list<u_int> available_index = {0, 1, 2, 3};
 
-u_short server_udp_port = SERVER_PORT_UDP;
 u_int colors[4] = {0xf6c345, 0xde193e, 0x25b4ff, 0x8a2be2};
 
 void init_server()
@@ -112,7 +104,6 @@ void init_server()
 		printf("UDP bind failed\n");
 		return;
 	}
-	//sf::IpAddress public_address = sf::IpAddress::getPublicAddress(sf::seconds(3));
 	if (listener.listen(SERVER_PORT_TCP) != sf::Socket::Done)
 	{
 		printf("TCP bind failed\n");
@@ -132,8 +123,6 @@ void run_server(Player* player)
 
 	// TCP stuff
 	sf::TcpSocket* client = new sf::TcpSocket;
-	sf::Socket::Status conn_status = listener.accept(*client);
-
 
 	if (listener.accept(*client) == sf::Socket::Done)
 	{
@@ -606,6 +595,7 @@ void send_disconnect(u_int index)
 	}
 }
 
+
 // Windows Stuff
 LRESULT CALLBACK winCallback(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -651,8 +641,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	
 	player.player_pos_x = 0.f;
 	player.player_pos_y = 0.f;
-
-
+	player.player_pos_y = 0.f;
 
 	// Create Window Class
 

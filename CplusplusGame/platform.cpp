@@ -1,10 +1,12 @@
 #define NOMINMAX
+
 #include <Windows.h>
 #include <SFML\System.hpp>
 #include <SFML\Network.hpp>
 #include <SFML\Graphics.hpp>
 #include <iterator>
 #include <string>
+#include <fstream>
 #include <list>
 #include <cmath> 
 #include <algorithm>
@@ -59,10 +61,11 @@ LRESULT CALLBACK winCallback(HWND hwnd,	UINT uMsg,	WPARAM wParam, LPARAM lParam)
 	return result;
 }
 
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	
 	// Create Window Class
-
 	WNDCLASS window_class = {};
 	window_class.style = CS_HREDRAW | CS_VREDRAW;
 	window_class.lpszClassName = "Game Window Class";
@@ -75,7 +78,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 	// Draw It
 	HWND window = CreateWindowA(window_class.lpszClassName,
 		"The Game Screen",
-		WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+		WS_VISIBLE | WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		1280,

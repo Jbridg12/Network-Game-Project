@@ -3,11 +3,6 @@
 #define SERVER_IP "127.0.0.1"
 
 
-// TODO  
-//
-//		- Implement better error checking in network code
-//		- Speed problems when moving a lot
-
 struct Message
 {
 	float newX;
@@ -37,8 +32,7 @@ internal void init_server_connection(sf::Packet* initial_world,
 									 Message* initial_player,
 									 sf::Packet* other_players,
 									 bool initial = true,
-									 sf::IpAddress new_ip = SERVER_IP,
-									 unsigned short new_server_udp_port = SERVER_PORT_UDP
+									 sf::IpAddress new_ip = SERVER_IP
 									)
 {
 	server_udp_port = SERVER_PORT_UDP;

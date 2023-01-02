@@ -449,8 +449,8 @@ internal void server_pass(float dt)
 	
 	sf::Packet pos_update;
 	sf::IpAddress sender = SERVER_IP;
-	unsigned short server_port_udp = SERVER_PORT_UDP;
-	sf::Socket::Status status_udp = socket_udp.receive(pos_update, sender, server_port_udp);
+	unsigned short spu2 = SERVER_PORT_UDP;
+	sf::Socket::Status status_udp = socket_udp.receive(pos_update, sender, spu2);
 	if (status_udp == sf::Socket::Done)
 	{
 		float newX;
