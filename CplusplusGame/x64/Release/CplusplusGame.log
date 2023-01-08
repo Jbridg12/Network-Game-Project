@@ -1,13 +1,145 @@
 ﻿  platform.cpp
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(9,21): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(13,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(31,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(32,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(33,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(34,9): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-  Generating code
-  8 of 12 functions (66.7%) were compiled, the rest were copied from previous compilation.
-    5 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
-  CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\x64\Release\CplusplusGame.exe
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(37,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(41,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(53,53): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(53,44): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(53,35): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(53,26): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(69,61): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(69,47): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(69,42): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(69,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(70,66): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(70,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(70,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(70,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(74,61): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(74,47): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(74,42): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(74,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,66): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,48): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,38): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(76,24): warning C4244: 'argument': conversion from 'float' to 'u_int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(85,18): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(90,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(91,42): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(96,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(152,35): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(153,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(158,48): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(183,52): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(184,59): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(204,54): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(212,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(221,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(228,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\render.cpp(229,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(142,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(474,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(475,41): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(536,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\game.cpp(537,36): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  server.cpp
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(10,8): error C3646: 'frame_ID': unknown override specifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(10,16): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(11,8): error C3646: 'color': unknown override specifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(11,13): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(12,8): error C3646: 'index': unknown override specifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(12,13): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(25,1): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(25,17): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(25,15): error C2146: syntax error: missing ';' before identifier 'ip'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(28,1): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(28,25): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(28,15): error C2146: syntax error: missing ';' before identifier 'socket_udp'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(29,1): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(29,25): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(29,15): error C2146: syntax error: missing ';' before identifier 'socket_tcp'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,10): error C2144: syntax error: 'void' should be preceded by ';'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,15): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,38): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,15): error C2182: 'init_server_connection': this use of 'void' is not valid
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,42): error C2065: 'Packet': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31,50): error C2065: 'initial_world': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(32,20): error C2065: 'initial_player': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(32,11): error C2275: 'Message': expected an expression instead of a type
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(33,11): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(33,15): error C2065: 'Packet': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(33,23): error C2065: 'other_players': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(34,11): error C2062: type 'bool' unexpected
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(35,11): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(37,1): error C2143: syntax error: missing ';' before '{'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(37,1): error C2447: '{': missing function header (old-style formal list?)
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,10): error C2144: syntax error: 'void' should be preceded by ';'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,15): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,38): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,15): error C2182: 'update_server_position': this use of 'void' is not valid
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,42): error C2065: 'Packet': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(116,49): error C2146: syntax error: missing ')' before identifier 'update'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(117,1): error C2143: syntax error: missing ';' before '{'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(117,1): error C2447: '{': missing function header (old-style formal list?)
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,10): error C2144: syntax error: 'void' should be preceded by ';'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,15): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,15): error C2182: 'server_send_next_turn': this use of 'void' is not valid
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,37): error C2065: 'u_int': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(127,43): error C2146: syntax error: missing ')' before identifier 'index'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(128,1): error C2143: syntax error: missing ';' before '{'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(128,1): error C2447: '{': missing function header (old-style formal list?)
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(141,16): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(141,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(141,10): error C2146: syntax error: missing ';' before identifier 'u_int'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(141,35): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(142,1): error C2143: syntax error: missing ';' before '{'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(142,1): error C2447: '{': missing function header (old-style formal list?)
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(153,10): error C2144: syntax error: 'void' should be preceded by ';'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(153,15): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(153,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(155,2): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(155,6): error C2065: 'Packet': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(155,13): error C2146: syntax error: missing ';' before identifier 'new_block'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(155,13): error C2065: 'new_block': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(156,2): error C2065: 'new_block': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(157,2): error C2065: 'new_block': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,2): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,14): error C2065: 'Status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,21): error C2146: syntax error: missing ';' before identifier 'status'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,21): error C2065: 'status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,30): error C2065: 'socket_tcp': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(158,46): error C2065: 'new_block': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(159,6): error C2065: 'status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(159,16): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(159,28): error C2065: 'Done': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(161,3): error C3861: 'OutputDebugString': identifier not found
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(166,16): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(166,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(166,10): error C2146: syntax error: missing ';' before identifier 'u_int'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(166,40): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(167,1): error C2143: syntax error: missing ';' before '{'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(167,1): error C2447: '{': missing function header (old-style formal list?)
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(177,10): error C2144: syntax error: 'void' should be preceded by ';'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(177,15): error C4430: missing type specifier - int assumed. Note: C++ does not support default-int
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(177,1): error C2086: 'int internal': redefinition
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(31): message : see declaration of 'internal'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(179,2): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(179,6): error C2065: 'Packet': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(179,13): error C2146: syntax error: missing ';' before identifier 'score'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(179,13): error C2065: 'score': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(180,2): error C2065: 'score': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,2): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,14): error C2065: 'Status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,21): error C2146: syntax error: missing ';' before identifier 'status'
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,21): error C2065: 'status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,30): error C2065: 'socket_tcp': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(181,46): error C2065: 'score': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(182,6): error C2065: 'status': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(182,16): error C2653: 'sf': is not a class or namespace name
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(182,28): error C2065: 'Done': undeclared identifier
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGame\server.cpp(184,3): error C3861: 'OutputDebugString': identifier not found
