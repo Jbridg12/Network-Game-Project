@@ -59,13 +59,15 @@ u_int result;
 Player player;
 
 PlacedBlock finish;
-float distance_to_goal;
 
 GAMEMODE current_gamemode;
 list<PlacedBlock> all_game_blocks;
 list<Player*> players;
 
 // Genetic Algorithm inputs
+list<float> distance_to_goal;
+float min_dist_to_goal;
+
 list<list<u_int*>> playing_inputs;
 list<list<u_int*>> placing_inputs;
 
@@ -79,6 +81,8 @@ internal void init_game(const Chromosome& x)
 	all_game_blocks = {};
 	result = 0;
 	frame_count = 0;
+	distance_to_goal = {};
+	min_dist_to_goal = 10.f;
 
 	if (initial)
 		players = {};
@@ -141,7 +145,9 @@ internal void init_game(const Chromosome& x)
 		//--------------------------------------------------------------------------
 
 		// Read other players status from server
-		if (player.index != 0)
+		bool empty_list;
+		other_players >> empty_list;
+		if (empty_list)
 		{
 			u_int player_count;
 			if (other_players >> player_count)
@@ -155,8 +161,8 @@ internal void init_game(const Chromosome& x)
 					other_players >> new_player->color;
 					other_players >> new_player->index;
 
-					new_player->player_pos_x = new_player->player_spawn_x;
-					new_player->player_pos_y = new_player->player_spawn_y;
+					new_player->player_pos_x = (float)(-1.6f + (new_player->index * 0.2));
+					new_player->player_pos_y = -0.5f;
 					new_player->player_half_width = 0.04f;
 					new_player->player_half_height = 0.04f;
 					new_player->x_speed = 0.f;
@@ -196,7 +202,7 @@ internal void init_game(const Chromosome& x)
 	return;
 }
 
-int input_timer = 20;
+int input_timer = 5;
 internal bool run_game(Input_State* input, float dt)
 {
 	// Update
@@ -258,10 +264,10 @@ internal bool run_game(Input_State* input, float dt)
 					switch (*ip)
 					{
 					case 1:	// BUTTON_A
-						player.x_acceleration -= 80;
+						player.x_acceleration -= 120;
 						break;
 					case 2:	// BUTTON_D
-						player.x_acceleration += 80;
+						player.x_acceleration += 120;
 						break;
 					case 0:	// BUTTON_SPACE
 						if (grounded)
@@ -270,10 +276,10 @@ internal bool run_game(Input_State* input, float dt)
 					case 6:	// BUTTON_A+SPACE
 						if (grounded)
 							player.y_acceleration += 700;
-						player.x_acceleration += 80;
+						player.x_acceleration += 90;
 						break;
 					case 7:	// BUTTON_D+SPACE
-						player.x_acceleration += 80;
+						player.x_acceleration += 90;
 						if (grounded)
 							player.y_acceleration += 700;
 						break;
@@ -288,7 +294,7 @@ internal bool run_game(Input_State* input, float dt)
 					// store distance to goal for scoring
 					float x_squared = abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x);
 					float y_squared = abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y);
-					distance_to_goal = sqrt(x_squared + y_squared);
+					distance_to_goal.push_back(min_dist_to_goal);
 
 					player.player_pos_x = player.player_spawn_x;
 					player.player_pos_y = player.player_spawn_y;
@@ -320,6 +326,12 @@ internal bool run_game(Input_State* input, float dt)
 			player.x_speed += player.x_acceleration * dt;
 
 
+			if(sqrt(abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x) + 
+					abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y)) 
+					< min_dist_to_goal )
+				min_dist_to_goal = sqrt(abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x) +
+										abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y));
+
 			// Reset acceleration every frame, except for Y due to gravity.
 			player.y_acceleration = -15.0f;
 			player.x_acceleration = 0.f;
@@ -340,7 +352,7 @@ internal bool run_game(Input_State* input, float dt)
 				// store distance to goal for scoring
 				float x_squared = abs(player.player_pos_x - finish.x) * abs(player.player_pos_x - finish.x);
 				float y_squared = abs(player.player_pos_y - finish.y) * abs(player.player_pos_y - finish.y);
-				distance_to_goal = sqrt(x_squared + y_squared);
+				distance_to_goal.push_back(min_dist_to_goal);
 				
 				player.player_pos_x = player.player_spawn_x;
 				player.player_pos_y = player.player_spawn_y;
@@ -408,16 +420,16 @@ internal bool run_game(Input_State* input, float dt)
 					switch (*ip)
 					{
 					case 1:	// BUTTON_A
-						all_game_blocks.back().x -= 1 * all_game_blocks.back().speed;
+						all_game_blocks.back().x -= 10 * all_game_blocks.back().speed;
 						break;
 					case 2:	// BUTTON_D
-						all_game_blocks.back().x += 1 * all_game_blocks.back().speed;
+						all_game_blocks.back().x += 10 * all_game_blocks.back().speed;
 						break;
 					case 3:	// BUTTON_W
-						all_game_blocks.back().y += 1 * all_game_blocks.back().speed;
+						all_game_blocks.back().y += 10 * all_game_blocks.back().speed;
 						break;
 					case 4:	// BUTTON_S
-						all_game_blocks.back().y -= 1 * all_game_blocks.back().speed;
+						all_game_blocks.back().y -= 10 * all_game_blocks.back().speed;
 						break;
 					case 5:	// BUTTON_Z
 						server_send_new_block(all_game_blocks.back().x, all_game_blocks.back().y, all_game_blocks.back().half_width, all_game_blocks.back().half_height);
@@ -480,7 +492,7 @@ internal bool server_pass()
 	if ((player.player_old_x != player.player_pos_x) || (player.player_old_y != player.player_pos_y))
 	{
 		sf::Packet send_pos_update;
-		send_pos_update << player.index << player.player_pos_x << player.player_pos_y;
+		send_pos_update << player.index << player.player_pos_x << player.player_pos_y << frame_count;
 		update_server_position(send_pos_update);
 	}
 
@@ -491,6 +503,7 @@ internal bool server_pass()
 		int header;
 		if (update >> header)
 		{
+			u_int dis_index;
 			PlacedBlock new_block;
 			Player* new_player = new Player;
 			std::list<Player*>::iterator it = players.begin();
@@ -545,6 +558,12 @@ internal bool server_pass()
 				case (PacketType::Reset):
 					return false;
 					break;
+				case (PacketType::Disconnect):
+					if (update >> dis_index)
+					{
+						players.erase(std::next(it, dis_index));
+					}
+					break;
 				default:
 					break;
 			}
@@ -561,16 +580,20 @@ internal bool server_pass()
 		float newX;
 		float newY;
 		u_int index;
-		if (pos_update >> index >> newX >> newY)
+		u_int frame;
+		if (pos_update >> index >> newX >> newY >> frame)
 		{
 			std::list<Player*>::iterator it = players.begin();
-			for (int i = 0; i < index; i++)
+			while ((*it)->index != index)
 			{
 				it++;
 			}
 
-			(*it)->player_pos_x = newX;
-			(*it)->player_pos_y = newY;
+			if (frame > (*it)->frame)
+			{
+				(*it)->player_pos_x = newX;
+				(*it)->player_pos_y = newY;
+			}
 		}
 	}
 

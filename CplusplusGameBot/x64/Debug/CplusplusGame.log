@@ -1,4 +1,4 @@
-﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(534,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (CplusplusGame.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (CplusplusGame.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   platform.cpp
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(37,21): warning C4018: '<': signed/unsigned mismatch
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(41,22): warning C4018: '<': signed/unsigned mismatch
@@ -36,8 +36,5 @@ C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(212
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(221,61): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(228,47): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\render.cpp(229,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(149,23): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(567,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\genetic.cpp(91,33): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\platform.cpp(197,9): warning C4244: 'return': conversion from 'float' to 'int', possible loss of data
+C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\game.cpp(155,23): warning C4018: '<': signed/unsigned mismatch
   CplusplusGame.vcxproj -> C:\Users\joshu\source\repos\Network Game Project\CplusplusGameBot\x64\Debug\CplusplusGameBot.exe

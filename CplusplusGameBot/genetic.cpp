@@ -19,7 +19,6 @@
 
 */
 
-
 // NOT USING KEY INPUTS JUST SIMULATE INPUT WITH INTEGER OPTIONS
 
 
@@ -43,7 +42,19 @@ internal void init_possible_inputs()
 	poss_placing_inputs[9] = 1;
 	poss_placing_inputs[10] = 4;
 	poss_placing_inputs[11] = 2;
-	poss_placing_inputs[12] = 5;
+	poss_placing_inputs[12] = 3;
+	poss_placing_inputs[13] = 1;
+	poss_placing_inputs[14] = 4;
+	poss_placing_inputs[15] = 2;
+	poss_placing_inputs[16] = 3;
+	poss_placing_inputs[17] = 1;
+	poss_placing_inputs[18] = 4;
+	poss_placing_inputs[19] = 2;
+	poss_placing_inputs[20] = 3;
+	poss_placing_inputs[21] = 1;
+	poss_placing_inputs[22] = 4;
+	poss_placing_inputs[23] = 2;
+	poss_placing_inputs[24] = 5;
 
 }
 // ----------------------------------------------------------------------------------------------------------
@@ -63,7 +74,7 @@ internal u_int* generate_random_placing_input(const std::function<double(void)>&
 	return &poss_placing_inputs[(int)(PLACING_INPUTS * rnd01())];
 }
 
-internal void shakespeare_init_genes(Chromosome& s, const std::function<double(void)>& rnd01)
+internal void init_genes(Chromosome& s, const std::function<double(void)>& rnd01)
 {
 	for (int j = 0; j < NUMBER_OF_ROUNDS; j++)
 	{
@@ -85,8 +96,6 @@ internal bool calculate_cost(const Chromosome& individual, Cost &cost)
 {
 	// RUN THE GAME 
 	// Need to implement a way to call the game with all of the inputs in the bot
-
-	float score = 0;
 
 	cost.score = GeneticApplication(individual);
 
@@ -204,17 +213,41 @@ internal Chromosome mutation_function(const Chromosome& x1, const std::function<
 	return new_chromosome;
 }
 
+
 internal void report_generation(int generation_number, const Generation_Type &last_generation, const Chromosome& best_genes)
 {
+	std::ofstream results(report_filename, std::ios::app);
 	char report[256];
-	sprintf_s(report, "Generation[%d]: %f", generation_number, last_generation.best_total_cost);
+	sprintf_s(report, "Generation[%d]: %f", generation_number, last_generation.average_cost);
+	results << string(report) << std::endl;
+	results.close();
 
-	OutputDebugString(report);
+	//OutputDebugString(report);
 }
+
+
 
 internal int run_ga()
 {
 	init_possible_inputs();
+	std::ifstream istream("AlgorithmCounter.txt");
+	std::string line; 
+	istream >> line;
+
+	int app_num = atoi(line.c_str());
+	istream.close();
+
+	std::ofstream ostream("AlgorithmCounter.txt");
+	ostream << std::to_string((int) !app_num);
+	ostream.close();
+
+
+	char report[256];
+	sprintf_s(report, "Bot #%d.txt", app_num);
+
+	report_filename = string(report);
+	std::ofstream results(report_filename);
+	results.close();
 
 	EA::Chronometer timer;
 	timer.tic();
@@ -223,7 +256,7 @@ internal int run_ga()
 	ga_obj.problem_mode = EA::GA_MODE::SOGA;	// State the Genetic Algorithm is aiming for a single objective.
 	ga_obj.population = 20;
 	ga_obj.generation_max = 1000;				// We want this to keep attempting for a long time.
-	ga_obj.init_genes = shakespeare_init_genes;
+	ga_obj.init_genes = init_genes;
 	ga_obj.calculate_SO_total_fitness = calculate_total_fitness;
 	ga_obj.eval_solution = calculate_cost;
 	ga_obj.SO_report_generation = report_generation;

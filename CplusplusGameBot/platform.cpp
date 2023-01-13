@@ -19,7 +19,7 @@ global_variable BUFFER_STATE buf;
 #include "server.cpp"
 #include "game.cpp"
 
-int GeneticApplication(const Chromosome& x1);
+float GeneticApplication(const Chromosome& x1);
 
 #include "openGA.hpp"
 #include "genetic.cpp"
@@ -184,14 +184,21 @@ void WindowLoop(HDC hdc, HWND window)
 	}
 }
 
-int GeneticApplication(const Chromosome &x1)
+float GeneticApplication(const Chromosome &x1)
 {
-	float gene_score = 0;
+	float gene_score = 0.f;
 
 	init_game(x1);
 	WindowLoop(hdc, window);
 
-	gene_score -= (int) distance_to_goal;
+	std::list<float>::iterator it = distance_to_goal.begin();
+	float distance_total = 0.f;
+	while (it != distance_to_goal.end())
+	{
+		distance_total += *it;
+		it++;
+	}
+	gene_score += (distance_total / distance_to_goal.size());
 	gene_score -= player.score;
 
 	return gene_score;

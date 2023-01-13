@@ -40,6 +40,7 @@ enum PacketType
 	NewPlayer,
 	EndOfGame,
 	Reset,
+	Disconnect,
 	PacketTypes
 };
 sf::IpAddress ip;
